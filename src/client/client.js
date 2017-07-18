@@ -20,12 +20,18 @@ var sendMessage = function() {
 };
 
 ws.addEventListener("message", function(e) {
-   var arr = JSON.parse(e.data);
-   for (var i in arr) {
-   	objs[i] = JSON.parse(arr[i]);
-   }
-   objs.length = Object.keys(objs).length;
-   console.log(objs);
+	var arr = JSON.parse(e.data);
+	objs = Object.keys(arr).map(function(key) {
+
+    	return JSON.parse(arr[key]);
+	});
+
+   //var arr = JSON.parse(e.data);
+   //for (var i in arr) {
+   //	objs[i] = JSON.parse(arr[i]);
+   //}
+   //objs.length = Object.keys(objs).length;
+   //console.log(objs[0]);
 
    draw();
 });
@@ -63,10 +69,9 @@ window.addEventListener("keyup", function(event) {
 	}
 });
 
-var players = {};
+var players = [];
 
 var draw = function() {
-	players.length = Object.keys(players).length;
 	var i = players.length;
 	while (objs.length > players.length) {
 		var map = document.getElementById("map");
@@ -78,18 +83,16 @@ var draw = function() {
 		player.style.position = "absolute";
 		player.style.top = "200px";
 		player.style.left = "200px";
-		players[i] = player;
+		players.push(player);
 		map.appendChild(player);
 		
-		console.log(JSON.stringify(players[i].style));
-		players.length = Object.keys(players).length;
+		//console.log(JSON.stringify(players[i].style));
 	}
 	//while (objs.length < players.length) {
 	//	delete players[0];
 	//	players.length = Object.keys(players).length;
 	//}
 	for (var i in objs) {
-		console.log(objs.length)
 		players[i].style.top = objs[i].y;
 		players[i].style.left = objs[i].x;
 	}
