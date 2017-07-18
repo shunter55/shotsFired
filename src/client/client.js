@@ -2,15 +2,108 @@ var PORT = 8080;
 
 var ws = new WebSocket('ws://localhost:' + PORT, 'echo-protocol');
 
+var objs = {};
+var keys = {};
+keys.a = false;
+keys.d = false;
+keys.w = false;
+keys.s = false;
+
 var sendMessage = function() {
-   let message = document.getElementById('message').value;
-   ws.send(message);
+   var packet = new Packet();
+   packet.left = keys.a;
+   packet.right = keys.d;
+   packet.up = keys.w;
+   packet.down = keys.s;
+
+   ws.send(JSON.stringify(packet));
 };
 
 ws.addEventListener("message", function(e) {
-   // The data is simply the message that we're sending back
-   var msg = e.data;
+   var arr = JSON.parse(e.data);
+   for (var i in arr) {
+   	objs[i] = JSON.parse(arr[i]);
+   }
+   objs.length = Object.keys(objs).length;
+   console.log(objs);
 
-   // Append the message
-   document.getElementById('chatlog').innerHTML += '<br>' + msg;
+   draw();
 });
+
+window.addEventListener("keydown", function(event) {
+	switch (event.key) {
+		case 'a':
+			keys.a = true;
+			break;
+		case 's':
+			keys.s = true;
+			break;
+		case 'd':
+			keys.d = true;
+			break;
+		case 'w':
+			keys.w = true;
+			break;
+	}
+});
+window.addEventListener("keyup", function(event) {
+	switch (event.key) {
+		case 'a':
+			keys.a = false;
+			break;
+		case 's':
+			keys.s = false;
+			break;
+		case 'd':
+			keys.d = false;
+			break;
+		case 'w':
+			keys.w = false;
+			break;
+	}
+});
+
+var players = {};
+
+var draw = function() {
+	players.length = Object.keys(players).length;
+	var i = players.length;
+	while (objs.length > players.length) {
+		var map = document.getElementById("map");
+		var player = document.createElement("div");
+		player.style.width = "20px";
+		player.style.height = "20px";
+		player.style.backgroundColor = "green";
+		player.style.borderRadius = "10px";
+		player.style.position = "absolute";
+		player.style.top = "200px";
+		player.style.left = "200px";
+		players[i] = player;
+		map.appendChild(player);
+		
+		console.log(JSON.stringify(players[i].style));
+		players.length = Object.keys(players).length;
+	}
+	//while (objs.length < players.length) {
+	//	delete players[0];
+	//	players.length = Object.keys(players).length;
+	//}
+	for (var i in objs) {
+		console.log(objs.length)
+		players[i].style.top = objs[i].y;
+		players[i].style.left = objs[i].x;
+	}
+
+	//var player = document.getElementById("player");
+	//player.style.top = obj.y;
+	//player.style.left = obj.x;
+};
+
+setInterval(function() {
+	sendMessage();
+}, 10);
+
+
+
+
+

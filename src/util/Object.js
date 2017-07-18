@@ -1,11 +1,16 @@
+var WIDTH = 600;
+var HEIGHT = 600;
+//var ACCELERATION = 1;
 var MAX_VELOCITY = 1;
 var ACCELERATION = .01
+var PLAYER_SIZE = 50;
 
 function Object(x, y) {
 	this.x = x;
 	this.y = y;
 	this.xVel = 0;
 	this.yVel = 0;
+	this.size = PLAYER_SIZE;
 
 	this.moveRight = function() {
 		this.xVel = Math.min(this.xVel + ACCELERATION, MAX_VELOCITY);
