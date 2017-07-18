@@ -22,7 +22,7 @@ wsServer.on('request', function(r){
     // Accept the connection.
    var connection = r.accept('echo-protocol', r.origin);
    
-   // Create event listener
+   // Update the connection's Object on message.
    connection.on('message', function(message) {
       // Get the packet from the string sent to us.
       var packet = JSON.parse(message.utf8Data);
@@ -38,26 +38,15 @@ wsServer.on('request', function(r){
         connection.obj.moveRight();
 
       connection.obj.tick();
-
-      //// Loop through all clients and create array of all objects.
-      //var objs = {};
-      //for(var i in connections.clients) {
-      //   var conn = connections.clients[i];
-      //   objs[i] = JSON.stringify(conn.obj);
-      //}
-      //// Send objs to all clients.
-      //for (var i in connections.clients) {
-      //   var conn = connections.clients[i];
-      //   // Send a message to the client with the message
-      //   conn.send(JSON.stringify(objs));
-      //}
    });
 
+   // Close the connection.
    connection.on('close', function(reasonCode, description) {
       delete connections.clients[id];
       console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
    });
 
+   // SETUP CONNECTION.
    // Set the connection's id.
    var id = 0;
    for (var i in connections.clients) {
@@ -67,9 +56,8 @@ wsServer.on('request', function(r){
    }
    connection.id = id;
    // Set the connection's object.
-   var xPos = (id % 2) * (WIDTH * 0.8) + (WIDTH * 0.1);
-   var yPos = (id % 2) * (HEIGHT * 0.8) + (HEIGHT * 0.1);
-   connection.obj = new Object(xPos, yPos);
+   var position = getPosition(id);
+   connection.obj = new Object(position.xPos, position.yPos);
 
    // Add the connection to our list of connections.
    connections.clients[id] = connection;
@@ -77,6 +65,29 @@ wsServer.on('request', function(r){
    console.log((new Date()) + ' Connection accepted [' + id + ']');
 });
 
+var getPosition = function(id) {
+   var xPos, yPos;
+   if (id === 0) {
+      xPos = WIDTH * 0.1;
+      yPos = HEIGHT * 0.1;
+   } else if (id === 1) {
+      xPos = WIDTH * 0.9;
+      yPos = HEIGHT * 0.9;
+   } else if (id === 2) {
+      xPos = WIDTH * 0.9;
+      yPos = HEIGHT * 0.1;
+   } else if (id == 3) {
+      xPos = WIDTH * 0.1;
+      yPos = HEIGHT * 0.9;
+   } else {
+      xPos = WIDTH / 2;
+      yPos = HEIGHT / 2;
+   }
+
+   return {"xPos": xPos, "yPos": yPos};
+}
+
+// Sends data to all clients.
 var sendMessage = function() {
    // Loop through all clients and create array of all objects.
    var objs = {};
@@ -92,6 +103,7 @@ var sendMessage = function() {
    }
 }
 
+// Send data to all clients.
 setInterval(function() {
    sendMessage();
 }, 10);
@@ -110,7 +122,7 @@ setInterval(function() {
 
 
 
-
+// Object
 var MAX_VELOCITY = 1;
 var ACCELERATION = .01
 
