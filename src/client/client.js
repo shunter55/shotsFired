@@ -34,6 +34,7 @@ ws.addEventListener("message", function(e) {
    //console.log(objs[0]);
 
    draw();
+   sendMessage();
 });
 
 window.addEventListener("keydown", function(event) {
@@ -102,9 +103,9 @@ var draw = function() {
 	//player.style.left = obj.x;
 };
 
-setInterval(function() {
-	sendMessage();
-}, 10);
+//setInterval(function() {
+//	sendMessage();
+//}, 10);
 
 
 

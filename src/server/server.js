@@ -39,18 +39,18 @@ wsServer.on('request', function(r){
 
       connection.obj.tick();
 
-      // Loop through all clients and create array of all objects.
-      var objs = {};
-      for(var i in connections.clients) {
-         var conn = connections.clients[i];
-         objs[i] = JSON.stringify(conn.obj);
-      }
-      // Send objs to all clients.
-      for (var i in connections.clients) {
-         var conn = connections.clients[i];
-         // Send a message to the client with the message
-         conn.send(JSON.stringify(objs));
-      }
+      //// Loop through all clients and create array of all objects.
+      //var objs = {};
+      //for(var i in connections.clients) {
+      //   var conn = connections.clients[i];
+      //   objs[i] = JSON.stringify(conn.obj);
+      //}
+      //// Send objs to all clients.
+      //for (var i in connections.clients) {
+      //   var conn = connections.clients[i];
+      //   // Send a message to the client with the message
+      //   conn.send(JSON.stringify(objs));
+      //}
    });
 
    connection.on('close', function(reasonCode, description) {
@@ -77,7 +77,24 @@ wsServer.on('request', function(r){
    console.log((new Date()) + ' Connection accepted [' + id + ']');
 });
 
+var sendMessage = function() {
+   // Loop through all clients and create array of all objects.
+   var objs = {};
+   for(var i in connections.clients) {
+      var conn = connections.clients[i];
+      objs[i] = JSON.stringify(conn.obj);
+   }
+   // Send objs to all clients.
+   for (var i in connections.clients) {
+      var conn = connections.clients[i];
+      // Send a message to the client with the message
+      conn.send(JSON.stringify(objs));
+   }
+}
 
+setInterval(function() {
+   sendMessage();
+}, 10);
 
 
 
