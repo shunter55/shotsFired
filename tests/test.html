@@ -1,0 +1,88 @@
+<script src='../src/server/Object.js'></script>
+
+<script>
+	var keys = {};
+	keys.a = false;
+	keys.d = false;
+	keys.w = false;
+	keys.s = false;
+
+	window.addEventListener("keydown", function(event) {
+		switch (event.key) {
+			case 'a':
+				keys.a = true;
+				break;
+			case 's':
+				keys.s = true;
+				break;
+			case 'd':
+				keys.d = true;
+				break;
+			case 'w':
+				keys.w = true;
+				break;
+		}
+	});
+	window.addEventListener("keyup", function(event) {
+		switch (event.key) {
+			case 'a':
+				keys.a = false;
+				break;
+			case 's':
+				keys.s = false;
+				break;
+			case 'd':
+				keys.d = false;
+				break;
+			case 'w':
+				keys.w = false;
+				break;
+		}
+	})
+
+	var obj = new Object();
+	//console.log(obj.getX());
+	console.log(obj.x);
+	//console.log(obj.getX());
+
+	var moveLeft = function() {
+		obj.moveLeft();
+		console.log(obj.x);
+	};
+
+	var draw = function() {
+		var player = document.getElementById("player");
+		player.style.top = obj.y;
+		player.style.left = obj.x;
+	};
+
+	setInterval(function() {
+		if (keys.a) {
+			obj.moveLeft();
+		}
+		if (keys.d) {
+			obj.moveRight();
+		}
+		if (keys.w) {
+			obj.moveUp();
+		}
+		if (keys.s) {
+			obj.moveDown();
+		}
+
+		obj.tick();
+		draw();
+		console.log(obj.position());
+	}, 10);
+</script>
+
+<input 
+
+
+<div onclick="obj.moveLeft()" style="height: 20px; width: 20px; display: inline-block;">&lt;</div>
+<div onclick="obj.moveRight()" style="height: 20px; width: 20px; display: inline-block;">&gt;</div>
+<div id="map" style="position: relative; border: 2px solid hotpink; height: 600px; width: 600px;">
+	<div id="player" style="width: 20px; height: 20px; background-color: green; border-radius: 10px; position: absolute;
+			top: 300; left: 300;"
+		onclick="moveLeft()"></div>
+</div>
