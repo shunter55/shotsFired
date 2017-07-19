@@ -1,5 +1,6 @@
 var PORT = 8080;
 
+//var ws = new WebSocket('ws://localhost:' + PORT, 'echo-protocol');
 var ws = new WebSocket('ws://localhost:' + PORT, 'echo-protocol');
 
 var objs = {};
@@ -73,9 +74,9 @@ window.addEventListener("keyup", function(event) {
 var players = [];
 
 var draw = function() {
+	var map = document.getElementById("map");
 	var i = players.length;
 	while (objs.length > players.length) {
-		var map = document.getElementById("map");
 		var player = document.createElement("div");
 		player.style.width = "20px";
 		player.style.height = "20px";
@@ -89,10 +90,11 @@ var draw = function() {
 		
 		//console.log(JSON.stringify(players[i].style));
 	}
-	//while (objs.length < players.length) {
-	//	delete players[0];
-	//	players.length = Object.keys(players).length;
-	//}
+	while (objs.length < players.length) {
+		map.removeChild(players[players.length - 1]);
+		delete players[players.length - 1];
+		players.length = Object.keys(players).length;
+	}
 	for (var i in objs) {
 		players[i].style.top = objs[i].y;
 		players[i].style.left = objs[i].x;
