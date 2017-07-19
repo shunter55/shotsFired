@@ -106,7 +106,7 @@ var sendMessage = function() {
 // Send data to all clients.
 setInterval(function() {
    sendMessage();
-}, 10);
+}, 20);
 
 
 
@@ -123,8 +123,9 @@ setInterval(function() {
 
 
 // Object
-var MAX_VELOCITY = 1;
-var ACCELERATION = .01
+var MAX_VELOCITY = 5;
+var ACCELERATION = .17;
+var DECELERATION = .92;
 
 function Object(x, y) {
    this.x = x;
@@ -152,8 +153,8 @@ function Object(x, y) {
       this.x += this.xVel;
       this.y += this.yVel;
 
-      this.xVel *= .99;
-      this.yVel *= .99;
+      this.xVel *= DECELERATION;
+      this.yVel *= DECELERATION;
       if (this.xVel < 0.0095 && this.xVel > 0) {
          this.xVel = 0;
       } else if (this.xVel > -0.0095 && this.xVel < 0) {

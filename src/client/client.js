@@ -3,6 +3,15 @@ var PORT = 8080;
 //var ws = new WebSocket('ws://localhost:' + PORT, 'echo-protocol');
 var ws = new WebSocket('ws://localhost:' + PORT, 'echo-protocol');
 
+var changePort = function() {
+	if (ws != null)
+		ws.close();
+
+	var portNum = document.getElementById("portNumber").value;
+	ws = new WebSocket('ws://' + portNum + ':' + PORT, 'echo-protocol');
+	setupWS();
+}
+
 var objs = {};
 var keys = {};
 keys.a = false;
@@ -20,23 +29,27 @@ var sendMessage = function() {
    ws.send(JSON.stringify(packet));
 };
 
-ws.addEventListener("message", function(e) {
-	var arr = JSON.parse(e.data);
-	objs = Object.keys(arr).map(function(key) {
+var setupWS = function() {
 
-    	return JSON.parse(arr[key]);
+	ws.addEventListener("message", function(e) {
+		var arr = JSON.parse(e.data);
+		objs = Object.keys(arr).map(function(key) {
+
+	    	return JSON.parse(arr[key]);
+		});
+
+	   //var arr = JSON.parse(e.data);
+	   //for (var i in arr) {
+	   //	objs[i] = JSON.parse(arr[i]);
+	   //}
+	   //objs.length = Object.keys(objs).length;
+	   //console.log(objs[0]);
+
+	   draw();
+	   sendMessage();
 	});
 
-   //var arr = JSON.parse(e.data);
-   //for (var i in arr) {
-   //	objs[i] = JSON.parse(arr[i]);
-   //}
-   //objs.length = Object.keys(objs).length;
-   //console.log(objs[0]);
-
-   draw();
-   sendMessage();
-});
+}
 
 window.addEventListener("keydown", function(event) {
 	switch (event.key) {
@@ -110,6 +123,6 @@ var draw = function() {
 //}, 10);
 
 
-
+setupWS();
 
 
