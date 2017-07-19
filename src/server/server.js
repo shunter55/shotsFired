@@ -109,6 +109,20 @@ var updateClients = function() {
    });
    bulletArr = bulletArr.filter(bullet => bullet.timeToLive > 0);
 
+   // Check hit.
+   for (var j in playerArr) {
+      var player = playerArr[j];
+      for (var i in bulletArr) {
+         var bullet = bulletArr[i];
+         var dist = Math.sqrt(Math.pow(player.x - bullet.x, 2) + Math.pow(player.y - bullet.y, 2));
+         if (dist <= player.radius + bullet.radius) {
+            player.x = WIDTH / 2;
+            player.y = HEIGHT / 2;
+         }
+      }
+   };
+
+
    // Send ServerPacket to all clients.
    var packet = JSON.stringify(new ServerPacket(playerArr, bulletArr));
    for (var i in connections.clients) {
@@ -151,6 +165,7 @@ function Player(x, y) {
    this.type = 'player';
    this.x = x;
    this.y = y;
+   this.radius = 12;
    this.xVel = 0;
    this.yVel = 0;
 
@@ -199,11 +214,12 @@ var BULLET_VELOCITY = 10;
 var BULLET_TIME_TO_LIVE = 75;
 function Bullet(fromX, fromY, toX, toY) {
    this.type = 'bullet';
-   this.x = fromX;
-   this.y = fromY;
+   this.radius = 6;
    var dist = Math.sqrt(Math.pow(toX - fromX, 2) + Math.pow(toY - fromY, 2));
    this.xVel = ((toX - fromX) / dist) * BULLET_VELOCITY;
    this.yVel = ((toY - fromY) / dist) * BULLET_VELOCITY;
+   this.x = fromX + (2 * this.xVel);
+   this.y = fromY + (2 * this.yVel);
    this.timeToLive = BULLET_TIME_TO_LIVE;
 
    this.tick = function() {
