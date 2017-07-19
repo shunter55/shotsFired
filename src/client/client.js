@@ -1,7 +1,8 @@
 var PORT = 8080;
+var IP = 10.0.0.200;
 
 //var ws = new WebSocket('ws://localhost:' + PORT, 'echo-protocol');
-var ws = new WebSocket('ws://localhost:' + PORT, 'echo-protocol');
+var ws = new WebSocket('ws://' + IP + ':' + PORT, 'echo-protocol');
 
 var changePort = function() {
 	if (ws != null)
