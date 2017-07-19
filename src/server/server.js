@@ -165,7 +165,7 @@ function Player(x, y) {
    this.type = 'player';
    this.x = x;
    this.y = y;
-   this.radius = 12;
+   this.radius = 10;
    this.xVel = 0;
    this.yVel = 0;
 
@@ -214,7 +214,7 @@ var BULLET_VELOCITY = 10;
 var BULLET_TIME_TO_LIVE = 75;
 function Bullet(fromX, fromY, toX, toY) {
    this.type = 'bullet';
-   this.radius = 6;
+   this.radius = 5;
    var dist = Math.sqrt(Math.pow(toX - fromX, 2) + Math.pow(toY - fromY, 2));
    this.xVel = ((toX - fromX) / dist) * BULLET_VELOCITY;
    this.yVel = ((toY - fromY) / dist) * BULLET_VELOCITY;
