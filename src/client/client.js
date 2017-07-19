@@ -13,12 +13,33 @@ var changePort = function() {
 	setupWS();
 }
 
-var objs = {};
+var serverPacket;
 var keys = {};
 keys.a = false;
 keys.d = false;
 keys.w = false;
 keys.s = false;
+keys.shoot = false;
+keys.shootPos = {'x': 0, 'y': 0};
+
+//window.addEventListener("onload", init());
+
+function init() {
+	console.log("init")
+	document.getElementById("map").addEventListener("click", shootBullet);
+}
+
+//document.addEventListener("click", shootBullet);
+
+function shootBullet(e) {
+	keys.shoot = true
+	keys.shootPos = {'x': e.clientX - 10, 'y': e.clientY - 30}
+	console.log(e);
+}
+
+//document.getElementById("map").addEventListener('onclick', function(e) {
+//	console.log(e);
+//});
 
 var sendMessage = function() {
    var packet = new Packet();
@@ -26,6 +47,10 @@ var sendMessage = function() {
    packet.right = keys.d;
    packet.up = keys.w;
    packet.down = keys.s;
+   packet.shoot = keys.shoot;
+   packet.shootPos = keys.shootPos;
+
+   keys.shoot = false;
 
    ws.send(JSON.stringify(packet));
 };
@@ -33,18 +58,7 @@ var sendMessage = function() {
 var setupWS = function() {
 
 	ws.addEventListener("message", function(e) {
-		var arr = JSON.parse(e.data);
-		objs = Object.keys(arr).map(function(key) {
-
-	    	return JSON.parse(arr[key]);
-		});
-
-	   //var arr = JSON.parse(e.data);
-	   //for (var i in arr) {
-	   //	objs[i] = JSON.parse(arr[i]);
-	   //}
-	   //objs.length = Object.keys(objs).length;
-	   //console.log(objs[0]);
+		serverPacket = JSON.parse(e.data);
 
 	   draw();
 	   sendMessage();
@@ -86,37 +100,55 @@ window.addEventListener("keyup", function(event) {
 });
 
 var players = [];
+var bullets = [];
 
 var draw = function() {
 	var map = document.getElementById("map");
+	
 	var i = players.length;
-	while (objs.length > players.length) {
+	// Add Players.
+	while (serverPacket.playerArr.length > players.length) {
 		var player = document.createElement("div");
 		player.style.width = "20px";
 		player.style.height = "20px";
 		player.style.backgroundColor = "green";
 		player.style.borderRadius = "10px";
 		player.style.position = "absolute";
-		player.style.top = "200px";
-		player.style.left = "200px";
 		players.push(player);
 		map.appendChild(player);
-		
-		//console.log(JSON.stringify(players[i].style));
 	}
-	while (objs.length < players.length) {
+	// Remove Players.
+	while (serverPacket.playerArr.length < players.length) {
 		map.removeChild(players[players.length - 1]);
-		delete players[players.length - 1];
-		players.length = Object.keys(players).length;
+		players.pop();
 	}
-	for (var i in objs) {
-		players[i].style.top = objs[i].y;
-		players[i].style.left = objs[i].x;
+	// Draw Players.
+	for (var i in serverPacket.playerArr) {
+		players[i].style.top = serverPacket.playerArr[i].y;
+		players[i].style.left = serverPacket.playerArr[i].x;
 	}
 
-	//var player = document.getElementById("player");
-	//player.style.top = obj.y;
-	//player.style.left = obj.x;
+	// Add Bullets.
+	while (serverPacket.bulletArr.length > bullets.length) {
+		var bullet = document.createElement("div");
+		bullet.style.width = "10px";
+		bullet.style.height = "10px";
+		bullet.style.backgroundColor = "red";
+		bullet.style.borderRadius = "5px";
+		bullet.style.position = "absolute";
+		bullets.push(bullet);
+		map.appendChild(bullet);
+	}
+	// Remove Bullets.
+	while (serverPacket.bulletArr.length < bullets.length) {
+		map.removeChild(bullets[bullets.length - 1]);
+		bullets.pop();
+	}
+	// Draw Bullets.
+	for (var i in serverPacket.bulletArr) {
+		bullets[i].style.top = serverPacket.bulletArr[i].y;
+		bullets[i].style.left = serverPacket.bulletArr[i].x;
+	}
 };
 
 //setInterval(function() {

@@ -8,6 +8,7 @@ var server = http.createServer(function(request, response) {});
 var connections = {};
 connections.count = 0;
 connections.clients = {};
+var bulletArr = [];
 
 server.listen(PORT, function() {
     console.log((new Date()) + ' Server is listening on port ' + PORT);
@@ -27,7 +28,7 @@ wsServer.on('request', function(r){
       // Get the packet from the string sent to us.
       var packet = JSON.parse(message.utf8Data);
       
-      // Update the connection's object.
+      // Update the connection's Player object.
       if (packet.up)
         connection.obj.moveUp();
       if (packet.down)
@@ -36,8 +37,14 @@ wsServer.on('request', function(r){
         connection.obj.moveLeft();
       if (packet.right)
         connection.obj.moveRight();
-
       connection.obj.tick();
+
+      // Shoot.
+      if (packet.shoot) {
+         var bullet = new Bullet(connection.obj.x, connection.obj.y, 
+                                 packet.shootPos.x, packet.shootPos.y);
+         bulletArr.push(bullet);
+      }
    });
 
    // Close the connection.
@@ -57,7 +64,7 @@ wsServer.on('request', function(r){
    connection.id = id;
    // Set the connection's object.
    var position = getPosition(id);
-   connection.obj = new Object(position.xPos, position.yPos);
+   connection.obj = new Player(position.xPos, position.yPos);
 
    // Add the connection to our list of connections.
    connections.clients[id] = connection;
@@ -88,24 +95,32 @@ var getPosition = function(id) {
 }
 
 // Sends data to all clients.
-var sendMessage = function() {
-   // Loop through all clients and create array of all objects.
-   var objs = {};
-   for(var i in connections.clients) {
-      var conn = connections.clients[i];
-      objs[i] = JSON.stringify(conn.obj);
-   }
-   // Send objs to all clients.
+var updateClients = function() {
+   // Get all player objects.
+   var playerArr = [];
    for (var i in connections.clients) {
       var conn = connections.clients[i];
-      // Send a message to the client with the message
-      conn.send(JSON.stringify(objs));
-   }
+      playerArr.push(conn.obj);
+   };
+
+   // Update Bullet objects.
+   bulletArr.map(function(bullet) {
+      bullet.tick();
+   });
+   bulletArr = bulletArr.filter(bullet => bullet.timeToLive > 0);
+
+   // Send ServerPacket to all clients.
+   var packet = JSON.stringify(new ServerPacket(playerArr, bulletArr));
+   for (var i in connections.clients) {
+      var conn = connections.clients[i];
+      conn.send(packet);
+   };
 }
 
 // Send data to all clients.
 setInterval(function() {
-   sendMessage();
+   // Send Object Coordinates to All Clients.
+   updateClients();
 }, 20);
 
 
@@ -119,15 +134,21 @@ setInterval(function() {
 
 
 
+// ServerPacket
+function ServerPacket(playerArr, bulletArr) {
+   this.playerArr = playerArr;
+   this.bulletArr = bulletArr;
+}
 
 
 
-// Object
+// Player
 var MAX_VELOCITY = 5;
 var ACCELERATION = .17;
 var DECELERATION = .92;
 
-function Object(x, y) {
+function Player(x, y) {
+   this.type = 'player';
    this.x = x;
    this.y = y;
    this.xVel = 0;
@@ -172,6 +193,25 @@ function Object(x, y) {
       console.log("(" + this.x + ", " + this.y + ")");
    }
 };
+
+// Bullet
+var BULLET_VELOCITY = 10;
+var BULLET_TIME_TO_LIVE = 75;
+function Bullet(fromX, fromY, toX, toY) {
+   this.type = 'bullet';
+   this.x = fromX;
+   this.y = fromY;
+   var dist = Math.sqrt(Math.pow(toX - fromX, 2) + Math.pow(toY - fromY, 2));
+   this.xVel = ((toX - fromX) / dist) * BULLET_VELOCITY;
+   this.yVel = ((toY - fromY) / dist) * BULLET_VELOCITY;
+   this.timeToLive = BULLET_TIME_TO_LIVE;
+
+   this.tick = function() {
+      this.x += this.xVel;
+      this.y += this.yVel;
+      this.timeToLive--;
+   }
+}
 
 
 
