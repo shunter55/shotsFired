@@ -72,8 +72,9 @@ var setup = {};
 setup.init = function() {
    var map = document.getElementById("map");
    map.addEventListener("click", player.shootBullet);
-   map.style.width = window.innerHeight - 50;
-   map.style.height = window.innerHeight - 50;
+   var ratio = map.style.width.substring(0, map.style.width.length-2) / SWIDTH;
+   map.style.width = window.innerHeight - 50 * ratio;
+   map.style.height = window.innerHeight - 50 * ratio;
 };
 
 setup.setupWS = function() {
@@ -99,7 +100,6 @@ player.shootBullet = function(e) {
 
 var util = {};
 util.convertCenterPosCircle = function(circle, ratio) {
-   console.log(circle)
    var pos = {};
    pos.x = circle.x - (ratio * circle.radius * 2) / 2;
    pos.y = circle.y - (ratio * circle.radius * 2) / 2;
@@ -142,6 +142,12 @@ var draw = function() {
     var pos = util.convertCenterPosCircle(player, ratio);
     players[i].style.top = pos.y;
     players[i].style.left = pos.x;
+
+    if (player.deathTimer > 0) {
+      players[i].style.opacity = "0.5";
+    } else {
+      players[i].style.opacity = "1";
+    }
   }
 
   // Add Bullets.
@@ -169,7 +175,6 @@ var draw = function() {
   }
 
   // Add Blocks.
-  console.log(serverPacket.blockArr)
   while (serverPacket.blockArr.length > blocks.length) {
     var block = document.createElement("div");
     block.style.backgroundColor = "orange";
