@@ -9,6 +9,7 @@ var connections = {};
 connections.count = 0;
 connections.clients = {};
 var bulletArr = [];
+var blockArr = [];
 
 server.listen(PORT, function() {
     console.log((new Date()) + ' Server is listening on port ' + PORT);
@@ -29,27 +30,30 @@ wsServer.on('request', function(r){
       var packet = JSON.parse(message.utf8Data);
       
       // Update the connection's Player object.
-      if (packet.up)
-        connection.obj.moveUp();
-      if (packet.down)
-        connection.obj.moveDown();
-      if (packet.left)
-        connection.obj.moveLeft();
-      if (packet.right)
-        connection.obj.moveRight();
-      connection.obj.tick();
+      var playerObj = this.obj;
+      if (playerObj.deathTimer <= 0) {
+         if (packet.up)
+            playerObj.moveUp();
+         if (packet.down)
+            playerObj.moveDown();
+         if (packet.left)
+            playerObj.moveLeft();
+         if (packet.right)
+            playerObj.moveRight();
+         playerObj.tick();
 
-      // Shoot.
-      if (packet.shoot) {
-         var bullet = new Bullet(connection.obj.x, connection.obj.y, 
-                                 packet.shootPos.x, packet.shootPos.y);
-         bulletArr.push(bullet);
+         // Shoot.
+         if (packet.shoot) {
+            var bullet = new Bullet(playerObj.x, playerObj.y, 
+                                    packet.shootPos.x, packet.shootPos.y);
+            bulletArr.push(bullet);
+         }
       }
    });
 
    // Close the connection.
    connection.on('close', function(reasonCode, description) {
-      delete connections.clients[id];
+      delete connections.clients[this.id];
       console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
    });
 
@@ -62,9 +66,10 @@ wsServer.on('request', function(r){
          id = conn.id + 1;
    }
    connection.id = id;
+
    // Set the connection's object.
-   var position = getPosition(id);
-   connection.obj = new Player(position.xPos, position.yPos);
+   var position = util.getPosition(id);
+   connection.obj = new Player(position.x, position.y, id);
 
    // Add the connection to our list of connections.
    connections.clients[id] = connection;
@@ -72,7 +77,79 @@ wsServer.on('request', function(r){
    console.log((new Date()) + ' Connection accepted [' + id + ']');
 });
 
-var getPosition = function(id) {
+
+
+// Sends data to all clients.
+var updateClients = function() {
+   // Get all player objects.
+   var playerArr = [];
+   for (var i in connections.clients) {
+      var conn = connections.clients[i];
+      playerArr.push(conn.obj);
+   };
+
+   // Update Bullet objects.
+   bulletArr.map(function(bullet) {
+      bullet.tick();
+   });
+   bulletArr = bulletArr.filter(bullet => bullet.timeToLive > 0);
+
+   // Check Player hit.
+   for (var j in playerArr) {
+      var player = playerArr[j];
+
+      // IF player death timer.
+      if (player.deathTimer > 0) {
+         player.deathTimer--;
+      }
+      // IF player hits walls.
+      else if (player.x < 0 || player.x > WIDTH - (2 * player.radius) || player.y < 0 || player.y > HEIGHT - (2 * player.radius)) {
+         util.resetPlayerPosition(player);
+         util.setPlayerDeathTimer(player);
+      }
+      // IF player collides with objects.
+      else {
+         // Bullet collision.
+         for (var i in bulletArr) {
+            var bullet = bulletArr[i];
+            // IF player collides with bullet.
+            if (util.collisionCC(player, bullet)) {
+               util.resetPlayerPosition(player);
+               util.setPlayerDeathTimer(player);
+               bulletArr.splice(i, 1);
+            }
+         }
+         // Block collision.
+         for (var i in blockArr) {
+            var block = blockArr[i];
+            // IF player collides with block.
+            if (util.collisionCR(player, block)) {
+               util.resetPlayerPosition(player);
+               util.setPlayerDeathTimer(player);
+            }
+         }
+      }
+   };
+
+   // Send ServerPacket to all clients.
+   var packet = JSON.stringify(new ServerPacket(playerArr, bulletArr));
+   for (var i in connections.clients) {
+      connections.clients[i].send(packet);
+   };
+}
+
+// Send data to all clients.
+setInterval(function() {
+   // Send Object Coordinates to All Clients.
+   updateClients();
+}, 20);
+
+
+var util = {};
+util.getPlayerObjWithConnectionId = function(id) {
+
+}
+util.getPosition = function(id) {
    var xPos, yPos;
    if (id === 0) {
       xPos = WIDTH * 0.1;
@@ -90,71 +167,38 @@ var getPosition = function(id) {
       xPos = WIDTH / 2;
       yPos = HEIGHT / 2;
    }
-
-   return {"xPos": xPos, "yPos": yPos};
+   return {"x": xPos, "y": yPos};
 }
-
-// Sends data to all clients.
-var updateClients = function() {
-   // Get all player objects.
-   var playerArr = [];
-   for (var i in connections.clients) {
-      var conn = connections.clients[i];
-      playerArr.push(conn.obj);
-   };
-
-   // Update Bullet objects.
-   bulletArr.map(function(bullet) {
-      bullet.tick();
-   });
-   bulletArr = bulletArr.filter(bullet => bullet.timeToLive > 0);
-
-   // Check hit.
-   for (var j in playerArr) {
-      var player = playerArr[j];
-      // Check player death timer.
-      if (player.deathTimer > 0) {
-         playerArr.splice(j, 1);
-      }
-      else if (player.x < 0 || player.x > WIDTH - (2 * player.radius) || player.y < 0 || player.y > HEIGHT - (2 * player.radius)) {
-         player.x = WIDTH / 2;
-         player.y = HEIGHT / 2;
-         playerArr.splice(j, 1);
-         player.deathTimer = 25;
-      }
-      // Check player collision with bullets.
-      else {
-         for (var i in bulletArr) {
-            var bullet = bulletArr[i];
-            var dist = Math.sqrt(Math.pow(player.x - bullet.x, 2) + Math.pow(player.y - bullet.y, 2));
-            if (dist <= player.radius + bullet.radius) {
-               player.x = WIDTH / 2;
-               player.y = HEIGHT / 2;
-               playerArr.splice(j, 1);
-               player.deathTimer = 25;
-               bulletArr.splice(i, 1);
-            }
-         }
-      }
-   };
-
-
-   // Send ServerPacket to all clients.
-   var packet = JSON.stringify(new ServerPacket(playerArr, bulletArr));
-   for (var i in connections.clients) {
-      var conn = connections.clients[i];
-      conn.send(packet);
-   };
+util.resetPlayerPosition = function(player) {
+   var position = util.getPosition(player.id);
+   player.x = position.x;
+   player.y = position.y;
+   player.xVel = 0;
+   player.yVel = 0;
 }
+util.setPlayerDeathTimer = function(player) {
+   player.deathTimer = 25;
+}
+util.collisionCC = function(circle1, circle2) {
+   var dist = Math.sqrt(Math.pow(circle1.x - circle2.x, 2) + Math.pow(circle1.y - circle2.y, 2));
+   return dist <= circle1.radius + circle2.radius;
+}
+util.collisionCR = function(circle, rect) {
+   var circleDist = {};
+   circleDist.x = Math.abs(circle.x - rect.center.x);
+   circleDist.y = Math.abs(cirlce.y - rect.center.y);
 
-// Send data to all clients.
-setInterval(function() {
-   // Send Object Coordinates to All Clients.
-   updateClients();
-}, 20);
+   if (circleDist.x > (rect.width / 2 + circle.radius)) { return false; }
+   if (circleDist.y > (rect.height / 2 + circle.radius)) { return false; }
 
+   if (circleDist.x <= (rect.width / 2)) { return true; } 
+   if (circleDist.y <= (rect.height / 2)) { return true; }
 
+   cornerDist_sq = Math.pow(circleDist.x - rect.width / 2, 2) +
+                       Math.pow(circleDist.y - rect.height / 2, 2);
 
+   return cornerDist_sq <= Math.pow(circle.radius, 2);
+}
 
 
 
@@ -172,13 +216,14 @@ function ServerPacket(playerArr, bulletArr) {
 
 
 
-// Player
+// Player - Circle
 var MAX_VELOCITY = 5;
 var ACCELERATION = .17;
 var DECELERATION = .92;
 
-function Player(x, y) {
+function Player(x, y, id) {
    this.type = 'player';
+   this.id = id;
    this.x = x;
    this.y = y;
    this.radius = 10;
@@ -229,7 +274,7 @@ function Player(x, y) {
    }
 };
 
-// Bullet
+// Bullet - Circle
 var BULLET_VELOCITY = 10;
 var BULLET_TIME_TO_LIVE = 75;
 function Bullet(fromX, fromY, toX, toY) {
@@ -247,6 +292,13 @@ function Bullet(fromX, fromY, toX, toY) {
       this.y += this.yVel;
       this.timeToLive--;
    }
+}
+
+// Block - Rectangle
+function Block(centerX, centerY, width, height, rotation) {
+   this.center = {'x': centerX, 'y': centerY};
+   this.width = width;
+   this.height = height;
 }
 
 
