@@ -103,7 +103,7 @@ var updateClients = function() {
          player.deathTimer--;
       }
       // IF player hits walls.
-      else if (player.x < 0 || player.x > WIDTH - (2 * player.radius) || player.y < 0 || player.y > HEIGHT - (2 * player.radius)) {
+      else if (player.x < 0 + player.radius || player.x > WIDTH - player.radius || player.y < 0 + player.radius || player.y > HEIGHT - player.radius) {
          util.resetPlayerPosition(player);
          util.setPlayerDeathTimer(player);
       }
@@ -138,7 +138,7 @@ var updateClients = function() {
          var bullet = bulletArr[j];
          // Bullet hits block.
          if (util.collisionCR(bullet, block)) {
-            bulletArr.splice(i, 1);
+            bulletArr.splice(j, 1);
          }
       }
    }
@@ -154,7 +154,7 @@ var updateClients = function() {
 setInterval(function() {
    // Send Object Coordinates to All Clients.
    updateClients();
-}, 20);
+}, 15);
 
 
 var util = {};
@@ -318,8 +318,12 @@ function Block(centerX, centerY, width, height) {
 
 var setup = {};
 setup.createMap = function() {
-   var block1 = new Block(WIDTH / 2, HEIGHT / 2, 100, 50);
+   var block1 = new Block(WIDTH / 2, HEIGHT / 2, 200, 25);
+   var block2 = new Block(WIDTH / 2, HEIGHT / 4, 25, 100);
+   var block3 = new Block(WIDTH / 2, 3 * HEIGHT / 4, 25, 100);
    blockArr.push(block1);
+   blockArr.push(block2);
+   blockArr.push(block3);
 }
 
 setup.createMap();

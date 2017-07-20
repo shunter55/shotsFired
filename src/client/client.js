@@ -172,7 +172,7 @@ var draw = function() {
   console.log(serverPacket.blockArr)
   while (serverPacket.blockArr.length > blocks.length) {
     var block = document.createElement("div");
-    block.style.backgroundColor = "blue";
+    block.style.backgroundColor = "orange";
     block.style.position = "absolute";
     blocks.push(block);
     map.appendChild(block);
