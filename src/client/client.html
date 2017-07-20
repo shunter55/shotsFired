@@ -1,23 +1,18 @@
 <script src="client.js"></script>
 <script src="Packet.js"></script>
-<!--
-<div id="chatlog"></div>
-<input type="text" id="message"></input>
-<input type="button" value="send" onclick="sendMessage()">
--->
+
 <html>
-<body>
+  <head>
+    <link rel="stylesheet" type="text/css" href="styles.css"/>
+  </head>
+  <body id="body">
+    <form onsubmit="connect()">
+      <input type="text" id="ip"></input>
+      <input type="button" value="connect">
+    </form>
 
-<input type="text" id="portNumber"></input>
-<input type="button" value="connect" onclick="changePort()">
+    <div id="map"></div>
+    <script>init()</script>
 
-<div id="map" style="position: relative; border: 2px solid hotpink; height: 600px; width: 600px;">
-	<!--<div id="player" style="width: 20px; height: 20px; background-color: green; border-radius: 10px; position: absolute;
-			top: 300; left: 300;"
-		onclick="moveLeft()"></div>-->
-</div>
-
-<script>init()</script>
-
-</body>
+  </body>
 </html>
