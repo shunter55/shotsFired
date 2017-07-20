@@ -10,4 +10,4 @@ Run Client:
 Resources:
 http://codular.com/node-web-sockets
 
-hi!
+hello, world!
