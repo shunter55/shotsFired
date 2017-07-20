@@ -50,7 +50,6 @@ server.connect = function() {
     ws.close();
   }
   var ip = document.getElementById("ip").value;
-  alert(ip)
   ws = new WebSocket('ws://' + ip + ':' + PORT, 'echo-protocol');
   setupWS();
 }
