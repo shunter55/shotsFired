@@ -6,13 +6,13 @@
     <link rel="stylesheet" type="text/css" href="styles.css"/>
   </head>
   <body id="body">
-    <form onsubmit="connect()">
+    <form onsubmit="server.connect()">
       <input type="text" id="ip"></input>
-      <input type="button" value="connect">
+      <input type="submit" value="connect">
     </form>
 
     <div id="map"></div>
-    <script>init()</script>
+    <script>setup.init()</script>
 
   </body>
 </html>

@@ -131,8 +131,20 @@ var updateClients = function() {
       }
    };
 
+   // Block collision.
+   for (var i in blockArr) {
+      var block = blockArr[i];
+      for (var j in bulletArr) {
+         var bullet = bulletArr[j];
+         // Bullet hits block.
+         if (util.collisionCR(bullet, block)) {
+            bulletArr.splice(i, 1);
+         }
+      }
+   }
+
    // Send ServerPacket to all clients.
-   var packet = JSON.stringify(new ServerPacket(playerArr, bulletArr));
+   var packet = JSON.stringify(new ServerPacket(playerArr, bulletArr, blockArr));
    for (var i in connections.clients) {
       connections.clients[i].send(packet);
    };
@@ -186,7 +198,7 @@ util.collisionCC = function(circle1, circle2) {
 util.collisionCR = function(circle, rect) {
    var circleDist = {};
    circleDist.x = Math.abs(circle.x - rect.center.x);
-   circleDist.y = Math.abs(cirlce.y - rect.center.y);
+   circleDist.y = Math.abs(circle.y - rect.center.y);
 
    if (circleDist.x > (rect.width / 2 + circle.radius)) { return false; }
    if (circleDist.y > (rect.height / 2 + circle.radius)) { return false; }
@@ -209,16 +221,17 @@ util.collisionCR = function(circle, rect) {
 
 
 // ServerPacket
-function ServerPacket(playerArr, bulletArr) {
+function ServerPacket(playerArr, bulletArr, blockArr) {
    this.playerArr = playerArr;
    this.bulletArr = bulletArr;
+   this.blockArr = blockArr;
 }
 
 
 
 // Player - Circle
-var MAX_VELOCITY = 5;
-var ACCELERATION = .17;
+var MAX_VELOCITY = 10;
+var ACCELERATION = .2;
 var DECELERATION = .92;
 
 function Player(x, y, id) {
@@ -295,7 +308,7 @@ function Bullet(fromX, fromY, toX, toY) {
 }
 
 // Block - Rectangle
-function Block(centerX, centerY, width, height, rotation) {
+function Block(centerX, centerY, width, height) {
    this.center = {'x': centerX, 'y': centerY};
    this.width = width;
    this.height = height;
@@ -303,6 +316,13 @@ function Block(centerX, centerY, width, height, rotation) {
 
 
 
+var setup = {};
+setup.createMap = function() {
+   var block1 = new Block(WIDTH / 2, HEIGHT / 2, 100, 50);
+   blockArr.push(block1);
+}
+
+setup.createMap();
 
 
 
