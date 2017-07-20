@@ -112,12 +112,28 @@ var updateClients = function() {
    // Check hit.
    for (var j in playerArr) {
       var player = playerArr[j];
-      for (var i in bulletArr) {
-         var bullet = bulletArr[i];
-         var dist = Math.sqrt(Math.pow(player.x - bullet.x, 2) + Math.pow(player.y - bullet.y, 2));
-         if (dist <= player.radius + bullet.radius) {
-            player.x = WIDTH / 2;
-            player.y = HEIGHT / 2;
+      // Check player death timer.
+      if (player.deathTimer > 0) {
+         playerArr.splice(j, 1);
+      }
+      else if (player.x < 0 || player.x > WIDTH - (2 * player.radius) || player.y < 0 || player.y > HEIGHT - (2 * player.radius)) {
+         player.x = WIDTH / 2;
+         player.y = HEIGHT / 2;
+         playerArr.splice(j, 1);
+         player.deathTimer = 25;
+      }
+      // Check player collision with bullets.
+      else {
+         for (var i in bulletArr) {
+            var bullet = bulletArr[i];
+            var dist = Math.sqrt(Math.pow(player.x - bullet.x, 2) + Math.pow(player.y - bullet.y, 2));
+            if (dist <= player.radius + bullet.radius) {
+               player.x = WIDTH / 2;
+               player.y = HEIGHT / 2;
+               playerArr.splice(j, 1);
+               player.deathTimer = 25;
+               bulletArr.splice(i, 1);
+            }
          }
       }
    };
@@ -166,6 +182,7 @@ function Player(x, y) {
    this.x = x;
    this.y = y;
    this.radius = 10;
+   this.deathTimer = 0;
    this.xVel = 0;
    this.yVel = 0;
 
@@ -202,6 +219,9 @@ function Player(x, y) {
       } else if (this.yVel > -0.0095 && this.yVel < 0) {
          this.yVel = 0;
       }
+
+      if (this.deathTimer > 0)
+         this.deathTimer--;
    }
 
    this.position = function() {
