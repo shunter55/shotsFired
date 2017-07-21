@@ -48,11 +48,19 @@ var server = {};
 server.connect = function() {
   if (ws != null) {
     ws.close();
+    ws = null;
   }
   var ip = document.getElementById("ip").value;
-  alert(ip)
   ws = new WebSocket('ws://' + ip + ':' + PORT, 'echo-protocol');
-  setupWS();
+  server.setupWS();
+}
+
+server.setupWS = function() {
+  ws.addEventListener("message", function(e) {
+    serverPacket = JSON.parse(e.data);
+    draw();
+    server.sendMessage();
+  });
 }
 
 server.sendMessage = function() {
@@ -64,7 +72,11 @@ server.sendMessage = function() {
    packet.shoot = keys.shoot;
    packet.shootPos = keys.shootPos;
    keys.shoot = false;
+
    ws.send(JSON.stringify(packet));
+   
+
+   //shootHack();
 };
 
 
@@ -77,15 +89,7 @@ setup.init = function() {
    map.style.height = window.innerHeight - 50 * ratio;
 };
 
-setup.setupWS = function() {
-  ws.addEventListener("message", function(e) {
-    serverPacket = JSON.parse(e.data);
-    draw();
-    server.sendMessage();
-  });
-};
-
-setup.setupWS();
+server.setupWS();
 
 
 var player = {};
@@ -115,9 +119,9 @@ util.convertCenterPosRectangle = function(rectangle, ratio) {
 
 var draw = function() {
   var map = document.getElementById("map");
-  map.style.width = window.innerHeight - 50;
-  map.style.height = window.innerHeight - 50;
   var ratio = map.style.width.substring(0, map.style.width.length-2) / SWIDTH;
+  map.style.width = window.innerHeight - 50 * ratio;
+  map.style.height = window.innerHeight - 50 * ratio;
   var i = players.length;
 
   // Add Players.
@@ -203,7 +207,14 @@ var draw = function() {
 
 
 
-
+var shootHack = function() {
+   for (var i in serverPacket.playerArr) {
+      var p = new Packet();
+      p.shoot = true;
+      p.shootPos = {'x': serverPacket.playerArr[i].x, 'y': serverPacket.playerArr[i].y}
+      ws.send(JSON.stringify(p));
+   }
+}
 
 
 
