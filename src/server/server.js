@@ -230,8 +230,8 @@ function ServerPacket(playerArr, bulletArr, blockArr) {
 
 
 // Player - Circle
-var MAX_VELOCITY = 10;
-var ACCELERATION = .2;
+var MAX_VELOCITY = 12;
+var ACCELERATION = .21;
 var DECELERATION = .92;
 
 function Player(x, y, id) {
