@@ -1,5 +1,5 @@
 var PORT = 8080;
-var IP = 'localhost';
+var IP = '10.0.0.200';
 var ws = new WebSocket('ws://' + IP + ':' + PORT, 'echo-protocol');
 
 var SWIDTH = 600;
@@ -46,12 +46,14 @@ window.addEventListener("keyup", function(event) {
 
 var server = {};
 server.connect = function() {
+  console.log("hello");
   if (ws != null) {
     ws.close();
   }
   var ip = document.getElementById("ip").value;
+  console.log(ip);
   ws = new WebSocket('ws://' + ip + ':' + PORT, 'echo-protocol');
-  setupWS();
+  setup.setupWS();
 }
 
 server.sendMessage = function() {
