@@ -85,8 +85,8 @@ setup.init = function() {
    var map = document.getElementById("map");
    map.addEventListener("click", player.shootBullet);
    var ratio = map.style.width.substring(0, map.style.width.length-2) / SWIDTH;
-   map.style.width = window.innerHeight - 50 * ratio;
-   map.style.height = window.innerHeight - 50 * ratio;
+   map.style.width = "600px"//window.innerHeight - 50;
+   map.style.height = "600px"//window.innerHeight - 50;
 };
 
 server.setupWS();
@@ -95,7 +95,7 @@ server.setupWS();
 var player = {};
 player.shootBullet = function(e) {
    var map = document.getElementById("map");
-   map.style.width = window.innerHeight - 50;
+   //map.style.width = window.innerHeight - 50;
    var offset = (window.innerWidth - map.style.width.substring(0, map.style.width.length-2))/2;
    var ratio = map.style.width.substring(0, map.style.width.length-2) / SWIDTH;
    keys.shoot = true
@@ -120,8 +120,9 @@ util.convertCenterPosRectangle = function(rectangle, ratio) {
 var draw = function() {
   var map = document.getElementById("map");
   var ratio = map.style.width.substring(0, map.style.width.length-2) / SWIDTH;
-  map.style.width = window.innerHeight - 50 * ratio;
-  map.style.height = window.innerHeight - 50 * ratio;
+  console.log(window.innerHeight)
+  //map.style.width = window.innerHeight - 50 * ratio;
+  //map.style.height = window.innerHeight - 50 * ratio;
   var i = players.length;
 
   // Add Players.
