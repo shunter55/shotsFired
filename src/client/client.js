@@ -217,7 +217,6 @@ function redrawMap() {
 }
 
 var draw = function() {
-  
   var i = players.length;
   redrawMap();
 

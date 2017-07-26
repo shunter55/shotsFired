@@ -102,10 +102,9 @@ var updateClients = function() {
       if (player.deathTimer > 0) {
          player.deathTimer--;
       }
-      // IF player hits walls.
-      else if (player.x < 0 + player.radius || player.x > WIDTH - player.radius || player.y < 0 + player.radius || player.y > HEIGHT - player.radius) {
-         util.resetPlayerPosition(player);
-         util.setPlayerDeathTimer(player);
+      // IF player goes out of bounds.
+      else if (!util.inBoundsC(player)) {
+         player.die();
       }
       // IF player collides with objects.
       else {
@@ -114,9 +113,8 @@ var updateClients = function() {
             var bullet = bulletArr[i];
             // IF player collides with bullet.
             if (util.collisionCC(player, bullet)) {
-               util.resetPlayerPosition(player);
-               util.setPlayerDeathTimer(player);
-               bulletArr.splice(i, 1);
+               player.die();
+               bulletArr.splice(i--, 1);
             }
          }
          // Block collision.
@@ -124,8 +122,7 @@ var updateClients = function() {
             var block = blockArr[i];
             // IF player collides with block.
             if (util.collisionCR(player, block)) {
-               util.resetPlayerPosition(player);
-               util.setPlayerDeathTimer(player);
+               player.die();
             }
          }
       }
@@ -138,8 +135,16 @@ var updateClients = function() {
          var bullet = bulletArr[j];
          // Bullet hits block.
          if (util.collisionCR(bullet, block)) {
-            bulletArr.splice(j, 1);
+            bulletArr.splice(j--, 1);
          }
+      }
+   }
+
+   // Bullet collision.
+   for (var i in bulletArr) {
+      var bullet = bulletArr[i];
+      if (!util.inBoundsC(bullet)) {
+         bulletArr.splice(i--, 1);
       }
    }
 
@@ -211,6 +216,12 @@ util.collisionCR = function(circle, rect) {
 
    return cornerDist_sq <= Math.pow(circle.radius, 2);
 }
+util.inBoundsC = function(circle) {
+   if (circle.x < 0 + circle.radius || circle.x > WIDTH - circle.radius || circle.y < 0 + circle.radius || circle.y > HEIGHT - circle.radius) {
+      return false;
+   }
+   return true;
+}
 
 
 
@@ -258,6 +269,11 @@ function Player(x, y, id) {
 
    this.moveDown = function() {
       this.yVel = Math.min(this.yVel + ACCELERATION, MAX_VELOCITY);
+   }
+
+   this.die = function() {
+      util.resetPlayerPosition(this);
+      util.setPlayerDeathTimer(this);
    }
 
    this.tick = function() {
