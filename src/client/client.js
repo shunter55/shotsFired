@@ -1,5 +1,5 @@
 var PORT = 8080;
-var IP = '10.0.0.200';
+var IP = 'localhost';
 var ws = new WebSocket('ws://' + IP + ':' + PORT, 'echo-protocol');
 
 var SWIDTH = 600;
@@ -9,6 +9,12 @@ var keys = { a: false, d: false, w: false, s: false, shoot: false, shootPos: { '
 var players = [];
 var bullets = [];
 var blocks = [];
+
+function to_num(s) {
+  return Number(s.substring(0, s.length-2));
+}
+
+var map = {};
 
 window.addEventListener("keydown", function(event) {
   switch (event.key) {
@@ -46,7 +52,6 @@ window.addEventListener("keyup", function(event) {
 
 var server = {};
 server.connect = function() {
-  console.log("hello");
   if (ws != null) {
     ws.close();
     ws = null;
@@ -82,13 +87,32 @@ server.sendMessage = function() {
 };
 
 
+
+function Map(len) {
+  map.map = document.getElementById("map");
+  console.log(map.map);
+  map.map.addEventListener("click", player.shootBullet);
+  map.map.style.width = len;
+  map.map.style.height = len;
+  map.ratio = map.map.style.width.substring(0, map.map.style.width.length - 2) / SWIDTH;
+  console.log(map.ratio);
+  map.width = len;
+  map.height = len;
+}
+
+map.getPoints = function(e) {
+  if(e.target.id === "map") {
+    return [e.layerX*map.ratio, e.layerY*map.ratio];
+  } else if(e.target.parentElement.id === "map") {
+    return [(e.layerX+to_num(e.target.style.left))*map.ratio, (e.layerY+to_num(e.target.style.top))*map.ratio];
+  }
+  return [600, 600];
+}
+
 var setup = {};
 setup.init = function() {
-   var map = document.getElementById("map");
-   map.addEventListener("click", player.shootBullet);
-   var ratio = map.style.width.substring(0, map.style.width.length-2) / SWIDTH;
-   map.style.width = window.innerHeight - 50 * ratio;
-   map.style.height = window.innerHeight - 50 * ratio;
+   Map(window.innerHeight - 50);
+   console.log(map);
 };
 
 server.setupWS();
@@ -96,12 +120,10 @@ server.setupWS();
 
 var player = {};
 player.shootBullet = function(e) {
-   var map = document.getElementById("map");
-   map.style.width = window.innerHeight - 50;
-   var offset = (window.innerWidth - map.style.width.substring(0, map.style.width.length-2))/2;
-   var ratio = map.style.width.substring(0, map.style.width.length-2) / SWIDTH;
+   console.log(e);
+   var points = map.getPoints(e);
    keys.shoot = true
-   keys.shootPos = {'x': (e.clientX - offset)/ratio, 'y': (e.clientY - 45)/ratio}
+   keys.shootPos = {'x': points[0], 'y': points[1]}
 }
 
 var util = {};
@@ -118,90 +140,133 @@ util.convertCenterPosRectangle = function(rectangle, ratio) {
    return pos;
 }
 
+map.createPlayer = function() {
+  var player = document.createElement('div');
+  player.style.width = (20*map.ratio) + 'px';
+  player.style.height = (20*map.ratio) + 'px';
+  player.style.backgroundColor = 'green';
+  player.style.borderRadius = (10 * map.ratio) + 'px';
+  player.style.position = 'absolute';
+  console.log(player);
+  players.push(player);
+  map.map.appendChild(player);
+};
+
+map.drawPlayer = function(player, i) {
+  var y = player.y*map.ratio - player.radius*map.ratio;
+  var x = player.x*map.ratio - player.radius*map.ratio;
+  players[i].style.top = y;
+  players[i].style.left = x;
+
+  if (player.deathTimer > 0) {
+    players[i].style.opacity = "0.5";
+  } else {
+    players[i].style.opacity = "1";
+  }
+}
+
+map.createBullet = function() {
+  var bullet = document.createElement('bullet');
+  bullet.style.width = 10*map.ratio;
+  bullet.style.height = 10*map.ratio;
+  bullet.style.backgroundColor = 'black';
+  bullet.style.borderRadius = (5*map.ratio) + 'px';
+  bullet.style.position = 'absolute';
+  bullets.push(bullet);
+  map.map.appendChild(bullet);
+};
+
+map.drawBullet = function(bullet, i) {
+  bullets[i].style.top = bullet.y*map.ratio - bullet.radius*map.ratio;
+  bullets[i].style.left = bullet.x*map.ratio - bullet.radius*map.ratio;
+};
+
+map.createBlock = function() {
+  var block = document.createElement("div");
+  block.style.backgroundColor = "orange";
+  block.style.position = "absolute";
+  blocks.push(block);
+  map.map.appendChild(block);
+}
+
+function redrawAll() {
+  for(var i = 0; i < players.length; i++) {
+    map.drawPlayer(players[i], i);
+  }
+  for(var i = 0; i < bullets.length; i++) {
+    map.drawBullet(bullets[i], i)
+  }
+  for(var i = 0; i < blocks.length; i++) {
+    var block = blocks[i];
+    console.log('new ' + map.ratio);
+    block.style.top = serverPacket.blockArr[i].center.y*map.ratio - serverPacket.blockArr[i].height*map.ratio/2;
+    block.style.left = serverPacket.blockArr[i].center.x*map.ratio - serverPacket.blockArr[i].width*map.ratio/2;
+    block.style.width = (serverPacket.blockArr[i].width * map.ratio) + "px";
+    block.style.height = (serverPacket.blockArr[i].height * map.ratio) + "px";
+  }
+}
+
+function redrawMap() {
+  if(to_num(map.map.style.height) !== window.innerHeight-50) {
+    map.map.style.height = window.innerHeight - 50;
+    map.map.style.width = window.innerHeight - 50;
+    console.log('old ' + map.ratio);
+    map.ratio = to_num(map.map.style.height) / SWIDTH;
+    redrawAll();
+  }
+}
 
 var draw = function() {
-  var map = document.getElementById("map");
-  var ratio = map.style.width.substring(0, map.style.width.length-2) / SWIDTH;
-  map.style.width = window.innerHeight - 50 * ratio;
-  map.style.height = window.innerHeight - 50 * ratio;
+  
   var i = players.length;
+  redrawMap();
 
   // Add Players.
   while (serverPacket.playerArr.length > players.length) {
-    var player = document.createElement("div");
-    player.style.width = (20 * ratio) + "px";
-    player.style.height = (20 * ratio) + "px";
-    player.style.backgroundColor = "green";
-    player.style.borderRadius = (10 * ratio) + "px";
-    player.style.position = "absolute";
-    players.push(player);
-    map.appendChild(player);
+    map.createPlayer();
   }
   // Remove Players.
   while (serverPacket.playerArr.length < players.length) {
-    map.removeChild(players[players.length - 1]);
+    map.map.removeChild(players[players.length - 1]);
     players.pop();
   }
   // Draw Players.
   for (var i in serverPacket.playerArr) {
-    var player = serverPacket.playerArr[i];
-    var pos = util.convertCenterPosCircle(player, ratio);
-    players[i].style.top = pos.y;
-    players[i].style.left = pos.x;
-
-    if (player.deathTimer > 0) {
-      players[i].style.opacity = "0.5";
-    } else {
-      players[i].style.opacity = "1";
-    }
+    map.drawPlayer(serverPacket.playerArr[i], i);
   }
 
   // Add Bullets.
   while (serverPacket.bulletArr.length > bullets.length) {
-    var bullet = document.createElement("div");
-    bullet.style.width = (10 * ratio) + "px";
-    bullet.style.height = (10 * ratio) + "px";
-    bullet.style.backgroundColor = "red";
-    bullet.style.borderRadius = (5 * ratio) + "px";
-    bullet.style.position = "absolute";
-    bullets.push(bullet);
-    map.appendChild(bullet);
+    map.createBullet();
   }
   // Remove Bullets.
   while (serverPacket.bulletArr.length < bullets.length) {
-    map.removeChild(bullets[bullets.length - 1]);
+    map.map.removeChild(bullets[bullets.length - 1]);
     bullets.pop();
   }
   // Draw Bullets.
   for (var i in serverPacket.bulletArr) {
-    var bullet = serverPacket.bulletArr[i];
-    var pos = util.convertCenterPosCircle(bullet, ratio)
-    bullets[i].style.top = pos.y;
-    bullets[i].style.left = pos.x;
+    map.drawBullet(serverPacket.bulletArr[i], i);
   }
 
   // Add Blocks.
   while (serverPacket.blockArr.length > blocks.length) {
-    var block = document.createElement("div");
-    block.style.backgroundColor = "orange";
-    block.style.position = "absolute";
-    blocks.push(block);
-    map.appendChild(block);
+    map.createBlock();
   }
   // Remove Blocks.
   while (serverPacket.blockArr.length < blocks.length) {
-    map.removeChild(blocks[blocks.length - 1]);
+    map.map.removeChild(blocks[blocks.length - 1]);
     blocks.pop();
   }
   // Draw Blocks.
   for (var i in serverPacket.blockArr) {
     var block = serverPacket.blockArr[i];
-    var pos = util.convertCenterPosRectangle(block, ratio);
-    blocks[i].style.top = pos.y;
-    blocks[i].style.left = pos.x;
+    var pos = util.convertCenterPosRectangle(block, map.ratio);
+    blocks[i].style.top = block.center.y*map.ratio - block.height*map.ratio/2;
+    blocks[i].style.left = block.center.x*map.ratio - block.width*map.ratio/2;
 
-    blocks[i].style.width = (block.width * ratio) + "px";
-    blocks[i].style.height = (block.height * ratio) + "px";
+    blocks[i].style.width = (block.width * map.ratio) + "px";
+    blocks[i].style.height = (block.height * map.ratio) + "px";
   }
 };
 
