@@ -94,7 +94,8 @@ function Map(len) {
   map.map.addEventListener("click", player.shootBullet);
   map.map.style.width = len;
   map.map.style.height = len;
-  map.ratio = map.map.style.width.substring(0, map.map.style.width.length - 2) / SWIDTH;
+  map.ratio = to_num(map.map.style.width) / SWIDTH
+  //map.map.style.width.substring(0, map.map.style.width.length - 2) / SWIDTH;
   console.log(map.ratio);
   map.width = len;
   map.height = len;
@@ -102,9 +103,10 @@ function Map(len) {
 
 map.getPoints = function(e) {
   if(e.target.id === "map") {
-    return [e.layerX*map.ratio, e.layerY*map.ratio];
+    console.log(map.ratio);
+    return [e.layerX/map.ratio, e.layerY/map.ratio];
   } else if(e.target.parentElement.id === "map") {
-    return [(e.layerX+to_num(e.target.style.left))*map.ratio, (e.layerY+to_num(e.target.style.top))*map.ratio];
+    return [(e.layerX+to_num(e.target.style.left))/map.ratio, (e.layerY+to_num(e.target.style.top))/map.ratio];
   }
   return [600, 600];
 }
@@ -142,12 +144,8 @@ util.convertCenterPosRectangle = function(rectangle, ratio) {
 
 map.createPlayer = function() {
   var player = document.createElement('div');
-  player.style.width = (20*map.ratio) + 'px';
-  player.style.height = (20*map.ratio) + 'px';
   player.style.backgroundColor = 'green';
-  player.style.borderRadius = (10 * map.ratio) + 'px';
   player.style.position = 'absolute';
-  console.log(player);
   players.push(player);
   map.map.appendChild(player);
 };
@@ -157,6 +155,9 @@ map.drawPlayer = function(player, i) {
   var x = player.x*map.ratio - player.radius*map.ratio;
   players[i].style.top = y;
   players[i].style.left = x;
+  players[i].style.width = (2 * player.radius) * map.ratio + 'px';
+  players[i].style.height = (2 * player.radius) * map.ratio + 'px';
+  players[i].style.borderRadius = player.radius * map.ratio + 'px';
 
   if (player.deathTimer > 0) {
     players[i].style.opacity = "0.5";
@@ -167,10 +168,7 @@ map.drawPlayer = function(player, i) {
 
 map.createBullet = function() {
   var bullet = document.createElement('bullet');
-  bullet.style.width = 10*map.ratio;
-  bullet.style.height = 10*map.ratio;
   bullet.style.backgroundColor = 'black';
-  bullet.style.borderRadius = (5*map.ratio) + 'px';
   bullet.style.position = 'absolute';
   bullets.push(bullet);
   map.map.appendChild(bullet);
@@ -179,6 +177,9 @@ map.createBullet = function() {
 map.drawBullet = function(bullet, i) {
   bullets[i].style.top = bullet.y*map.ratio - bullet.radius*map.ratio;
   bullets[i].style.left = bullet.x*map.ratio - bullet.radius*map.ratio;
+  bullets[i].style.width = (2 * bullet.radius) * map.ratio + 'px'
+  bullets[i].style.height = (2 * bullet.radius) * map.ratio + 'px'
+  bullets[i].style.borderRadius = bullet.radius * map.ratio + 'px'
 };
 
 map.createBlock = function() {
@@ -187,6 +188,13 @@ map.createBlock = function() {
   block.style.position = "absolute";
   blocks.push(block);
   map.map.appendChild(block);
+}
+
+map.drawBlock = function(block, i) {
+  blocks[i].style.top = block.center.y*map.ratio - block.height*map.ratio/2;
+  blocks[i].style.left = block.center.x*map.ratio - block.width*map.ratio/2;
+  blocks[i].style.width = (block.width * map.ratio) + "px";
+  blocks[i].style.height = (block.height * map.ratio) + "px";
 }
 
 function redrawAll() {
@@ -259,13 +267,7 @@ var draw = function() {
   }
   // Draw Blocks.
   for (var i in serverPacket.blockArr) {
-    var block = serverPacket.blockArr[i];
-    var pos = util.convertCenterPosRectangle(block, map.ratio);
-    blocks[i].style.top = block.center.y*map.ratio - block.height*map.ratio/2;
-    blocks[i].style.left = block.center.x*map.ratio - block.width*map.ratio/2;
-
-    blocks[i].style.width = (block.width * map.ratio) + "px";
-    blocks[i].style.height = (block.height * map.ratio) + "px";
+    map.drawBlock(serverPacket.blockArr[i], i);
   }
 };
 
