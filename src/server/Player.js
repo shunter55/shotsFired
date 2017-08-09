@@ -105,15 +105,6 @@ module.exports = Player;
 
 
 
-var p = new Player(100, 100, 0);
-p.moveUp();
-p.tick();
-p.position();
-p.die();
-p.position();
-
-
-
 
 
 

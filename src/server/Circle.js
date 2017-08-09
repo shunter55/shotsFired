@@ -39,14 +39,6 @@ class Circle {
 module.exports = Circle;
 
 
-var c = new Circle(10, 490, 10);
-console.log(c.inBounds());
-c.y = 491;
-console.log(c.inBounds());
-
-
-
-
 
 
 

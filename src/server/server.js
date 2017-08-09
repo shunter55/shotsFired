@@ -177,7 +177,7 @@ setup.createMap = function() {
    var HEIGHT = Constants.map.HEIGHT;
 
    var block1 = new Block(WIDTH / 2, HEIGHT / 2, 200, 25);
-   var block2 = new Block(WIDTH / 2, HEIGHT / 4, 25, 100);
+   var block2 = new Block(WIDTH / 2, HEIGHT / 10, 25, 100);
    var block3 = new Block(WIDTH / 2, 3 * HEIGHT / 4, 25, 100);
    blockArr.push(block1);
    blockArr.push(block2);
