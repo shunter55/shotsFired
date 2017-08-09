@@ -65,6 +65,7 @@ server.connect = function() {
 server.setupWS = function() {
   ws.addEventListener("message", function(e) {
     serverPacket = JSON.parse(e.data);
+    console.log(serverPacket);
     draw();
     server.sendMessage();
   });
@@ -151,8 +152,8 @@ map.createPlayer = function() {
 };
 
 map.drawPlayer = function(player, i) {
-  var y = player.y*map.ratio - player.radius*map.ratio;
-  var x = player.x*map.ratio - player.radius*map.ratio;
+  var y = player.center.y*map.ratio - player.radius*map.ratio;
+  var x = player.center.x*map.ratio - player.radius*map.ratio;
   players[i].style.top = y;
   players[i].style.left = x;
   players[i].style.width = (2 * player.radius) * map.ratio + 'px';
@@ -175,8 +176,8 @@ map.createBullet = function() {
 };
 
 map.drawBullet = function(bullet, i) {
-  bullets[i].style.top = bullet.y*map.ratio - bullet.radius*map.ratio;
-  bullets[i].style.left = bullet.x*map.ratio - bullet.radius*map.ratio;
+  bullets[i].style.top = bullet.center.y*map.ratio - bullet.radius*map.ratio;
+  bullets[i].style.left = bullet.center.x*map.ratio - bullet.radius*map.ratio;
   bullets[i].style.width = (2 * bullet.radius) * map.ratio + 'px'
   bullets[i].style.height = (2 * bullet.radius) * map.ratio + 'px'
   bullets[i].style.borderRadius = bullet.radius * map.ratio + 'px'

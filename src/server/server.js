@@ -1,6 +1,9 @@
-var PORT = 8080
-var WIDTH = 600;
-var HEIGHT = 600;
+const Constants = require("./Constants");
+const ServerPacket = require('./ServerPacket');
+const Player = require('./Player');
+const Block = require('./Block');
+const Bullet = require('./Bullet');
+const Vertex = require('./Vertex');
 
 var http = require('http');
 var server = http.createServer(function(request, response) {});
@@ -11,8 +14,8 @@ connections.clients = {};
 var bulletArr = [];
 var blockArr = [];
 
-server.listen(PORT, function() {
-    console.log((new Date()) + ' Server is listening on port ' + PORT);
+server.listen(Constants.server.PORT, function() {
+    console.log((new Date()) + ' Server is listening on port ' + Constants.server.PORT);
 });
 
 var WebSocketServer = require('websocket').server;
@@ -44,8 +47,8 @@ wsServer.on('request', function(r){
 
          // Shoot.
          if (packet.shoot) {
-            var bullet = new Bullet(playerObj.x, playerObj.y, 
-                                    packet.shootPos.x, packet.shootPos.y);
+            var bullet = new Bullet(new Vertex(playerObj.center.x, playerObj.center.y), 
+                                    new Vertex(packet.shootPos.x, packet.shootPos.y));
             bulletArr.push(bullet);
          }
       }
@@ -68,8 +71,7 @@ wsServer.on('request', function(r){
    connection.id = id;
 
    // Set the connection's object.
-   var position = util.getPosition(id);
-   connection.obj = new Player(position.x, position.y, id);
+   connection.obj = new Player(id);
 
    // Add the connection to our list of connections.
    connections.clients[id] = connection;
@@ -103,7 +105,7 @@ var updateClients = function() {
          player.deathTimer--;
       }
       // IF player goes out of bounds.
-      else if (!util.inBoundsC(player)) {
+      else if (!player.inBounds()) {
          player.die();
       }
       // IF player collides with objects.
@@ -112,7 +114,7 @@ var updateClients = function() {
          for (var i in bulletArr) {
             var bullet = bulletArr[i];
             // IF player collides with bullet.
-            if (util.collisionCC(player, bullet)) {
+            if (player.collideCircle(bullet)) {
                player.die();
                bulletArr.splice(i--, 1);
             }
@@ -121,7 +123,8 @@ var updateClients = function() {
          for (var i in blockArr) {
             var block = blockArr[i];
             // IF player collides with block.
-            if (util.collisionCR(player, block)) {
+            //if (util.collisionCR(player, block)) {
+            if (player.collideRectangle(block)) {
                player.die();
             }
          }
@@ -134,7 +137,7 @@ var updateClients = function() {
       for (var j in bulletArr) {
          var bullet = bulletArr[j];
          // Bullet hits block.
-         if (util.collisionCR(bullet, block)) {
+         if (bullet.collideRectangle(block)) {
             bulletArr.splice(j--, 1);
          }
       }
@@ -143,7 +146,7 @@ var updateClients = function() {
    // Bullet collision.
    for (var i in bulletArr) {
       var bullet = bulletArr[i];
-      if (!util.inBoundsC(bullet)) {
+      if (!bullet.inBounds()) {
          bulletArr.splice(i--, 1);
       }
    }
@@ -166,174 +169,13 @@ var util = {};
 util.getPlayerObjWithConnectionId = function(id) {
 
 }
-util.getPosition = function(id) {
-   var xPos, yPos;
-   if (id === 0) {
-      xPos = WIDTH * 0.1;
-      yPos = HEIGHT * 0.1;
-   } else if (id === 1) {
-      xPos = WIDTH * 0.9;
-      yPos = HEIGHT * 0.9;
-   } else if (id === 2) {
-      xPos = WIDTH * 0.9;
-      yPos = HEIGHT * 0.1;
-   } else if (id == 3) {
-      xPos = WIDTH * 0.1;
-      yPos = HEIGHT * 0.9;
-   } else {
-      xPos = WIDTH / 2;
-      yPos = HEIGHT / 2;
-   }
-   return {"x": xPos, "y": yPos};
-}
-util.resetPlayerPosition = function(player) {
-   var position = util.getPosition(player.id);
-   player.x = position.x;
-   player.y = position.y;
-   player.xVel = 0;
-   player.yVel = 0;
-}
-util.setPlayerDeathTimer = function(player) {
-   player.deathTimer = 25;
-}
-util.collisionCC = function(circle1, circle2) {
-   var dist = Math.sqrt(Math.pow(circle1.x - circle2.x, 2) + Math.pow(circle1.y - circle2.y, 2));
-   return dist <= circle1.radius + circle2.radius;
-}
-util.collisionCR = function(circle, rect) {
-   var circleDist = {};
-   circleDist.x = Math.abs(circle.x - rect.center.x);
-   circleDist.y = Math.abs(circle.y - rect.center.y);
-
-   if (circleDist.x > (rect.width / 2 + circle.radius)) { return false; }
-   if (circleDist.y > (rect.height / 2 + circle.radius)) { return false; }
-
-   if (circleDist.x <= (rect.width / 2)) { return true; } 
-   if (circleDist.y <= (rect.height / 2)) { return true; }
-
-   cornerDist_sq = Math.pow(circleDist.x - rect.width / 2, 2) +
-                       Math.pow(circleDist.y - rect.height / 2, 2);
-
-   return cornerDist_sq <= Math.pow(circle.radius, 2);
-}
-util.inBoundsC = function(circle) {
-   if (circle.x < 0 + circle.radius || circle.x > WIDTH - circle.radius || circle.y < 0 + circle.radius || circle.y > HEIGHT - circle.radius) {
-      return false;
-   }
-   return true;
-}
-
-
-
-
-
-
-
-
-
-// ServerPacket
-function ServerPacket(playerArr, bulletArr, blockArr) {
-   this.playerArr = playerArr;
-   this.bulletArr = bulletArr;
-   this.blockArr = blockArr;
-}
-
-
-
-// Player - Circle
-var MAX_VELOCITY = 12;
-var ACCELERATION = .21;
-var DECELERATION = .92;
-
-function Player(x, y, id) {
-   this.type = 'player';
-   this.id = id;
-   this.x = x;
-   this.y = y;
-   this.radius = 10;
-   this.deathTimer = 0;
-   this.xVel = 0;
-   this.yVel = 0;
-
-   this.moveRight = function() {
-      this.xVel = Math.min(this.xVel + ACCELERATION, MAX_VELOCITY);
-   }
-
-   this.moveLeft = function() {
-      this.xVel = Math.max(this.xVel - ACCELERATION, -MAX_VELOCITY);
-   }
-
-   this.moveUp = function() {
-      this.yVel = Math.max(this.yVel - ACCELERATION, -MAX_VELOCITY);
-   }
-
-   this.moveDown = function() {
-      this.yVel = Math.min(this.yVel + ACCELERATION, MAX_VELOCITY);
-   }
-
-   this.die = function() {
-      util.resetPlayerPosition(this);
-      util.setPlayerDeathTimer(this);
-   }
-
-   this.tick = function() {
-      this.x += this.xVel;
-      this.y += this.yVel;
-
-      this.xVel *= DECELERATION;
-      this.yVel *= DECELERATION;
-      if (this.xVel < 0.0095 && this.xVel > 0) {
-         this.xVel = 0;
-      } else if (this.xVel > -0.0095 && this.xVel < 0) {
-         this.xVel = 0;
-      }
-      
-      if (this.yVel < 0.0095 && this.yVel > 0) {
-         this.yVel = 0;
-      } else if (this.yVel > -0.0095 && this.yVel < 0) {
-         this.yVel = 0;
-      }
-
-      if (this.deathTimer > 0)
-         this.deathTimer--;
-   }
-
-   this.position = function() {
-      console.log("(" + this.x + ", " + this.y + ")");
-   }
-};
-
-// Bullet - Circle
-var BULLET_VELOCITY = 10;
-var BULLET_TIME_TO_LIVE = 75;
-function Bullet(fromX, fromY, toX, toY) {
-   this.type = 'bullet';
-   this.radius = 5;
-   var dist = Math.sqrt(Math.pow(toX - fromX, 2) + Math.pow(toY - fromY, 2));
-   this.xVel = ((toX - fromX) / dist) * BULLET_VELOCITY;
-   this.yVel = ((toY - fromY) / dist) * BULLET_VELOCITY;
-   this.x = fromX + (2 * this.xVel);
-   this.y = fromY + (2 * this.yVel);
-   this.timeToLive = BULLET_TIME_TO_LIVE;
-
-   this.tick = function() {
-      this.x += this.xVel;
-      this.y += this.yVel;
-      this.timeToLive--;
-   }
-}
-
-// Block - Rectangle
-function Block(centerX, centerY, width, height) {
-   this.center = {'x': centerX, 'y': centerY};
-   this.width = width;
-   this.height = height;
-}
-
 
 
 var setup = {};
 setup.createMap = function() {
+   var WIDTH = Constants.map.WIDTH;
+   var HEIGHT = Constants.map.HEIGHT;
+
    var block1 = new Block(WIDTH / 2, HEIGHT / 2, 200, 25);
    var block2 = new Block(WIDTH / 2, HEIGHT / 4, 25, 100);
    var block3 = new Block(WIDTH / 2, 3 * HEIGHT / 4, 25, 100);
