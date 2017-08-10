@@ -16,9 +16,9 @@ var Constants = {
 		TIME_TO_LIVE: 75
 	},
 	map: {
-		WIDTH: 800,
-		HEIGHT: 800,
-		SCREEN_SIZE: 425 // (Client Width / 2) * sqrt(2)
+		WIDTH: 600,
+		HEIGHT: 600,
+		SCREEN_SIZE: 600
 	}
 }
 

@@ -18,6 +18,15 @@ class Bullet extends Circle {
       this.center.y += this.yVel;
       this.timeToLive--;
    }
+
+   copy() {
+   	var newBullet = new Bullet(this.center, this.center);
+   	newBullet.center.x = this.center.x;
+   	newBullet.center.y = this.center.y;
+   	newBullet.xVel = this.xVel;
+   	newBullet.yVel = this.yVel;
+   	newBullet.timeToLive = this.timeToLive;
+   }
 }
 
 module.exports = Bullet;

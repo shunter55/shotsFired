@@ -75,6 +75,14 @@ class Player extends Circle {
          this.deathTimer--;
    }
 
+   copy() {
+   	var newPlayer = new Player(this.center.x, this.center.y, this.id);
+   	newPlayer.deathTimer = this.deathTimer;
+   	newPlayer.xVel = this.xVel;
+   	newPlayer.yVel = this.yVel;
+   	return newPlayer;
+   }
+
    position() {
       console.log("(" + this.x + ", " + this.y + ")");
    }

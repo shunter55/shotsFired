@@ -152,9 +152,8 @@ var updateClients = function() {
    }
 
    // Send ServerPacket to all clients.
-   var packet = JSON.stringify(new ServerPacket(playerArr, bulletArr, blockArr));
-   for (var i in connections.clients) {
-      connections.clients[i].send(packet);
+   for (var id in connections.clients) {
+      connections.clients[id].send(util.createPacketForId(id, playerArr, bulletArr, blockArr));
    };
 }
 
@@ -166,9 +165,36 @@ setInterval(function() {
 
 
 var util = {};
-util.getPlayerObjWithConnectionId = function(id) {
+util.createPacketForId = function(playerId, playerArr, bulletArr, blockArr) {
+   var player = connections.clients[playerId].obj;
 
+   // Get players in range.
+   var newPlayerArr = [];
+   newPlayerArr.push(player);
+   playerArr.forEach(function (obj) {
+      if (obj.id != player.id && player.center.dist(obj.center) < Constants.map.SCREEN_SIZE) {
+         newPlayerArr.push(obj);
+      }
+   });
+   // Get bullets in range.
+   var newBulletArr = [];
+   bulletArr.forEach(function (obj) {
+      if (player.center.dist(obj.center) < Constants.map.SCREEN_SIZE) {
+         newBulletArr.push(obj);
+      }
+   });
+   // Get blocks in range.
+   var newBlockArr = [];
+   blockArr.forEach(function (obj) {
+      if (player.distRectangle(obj) < Constants.map.SCREEN_SIZE) {   
+         newBlockArr.push(obj);
+      }
+   });
+
+   var packet = new ServerPacket(newPlayerArr, newBulletArr, newBlockArr);
+   return JSON.stringify(packet);
 }
+
 
 
 var setup = {};
@@ -176,9 +202,18 @@ setup.createMap = function() {
    var WIDTH = Constants.map.WIDTH;
    var HEIGHT = Constants.map.HEIGHT;
 
-   var block1 = new Block(WIDTH / 2, HEIGHT / 2, 200, 25);
-   var block2 = new Block(WIDTH / 2, HEIGHT / 10, 25, 100);
-   var block3 = new Block(WIDTH / 2, 3 * HEIGHT / 4, 25, 100);
+   var wallBot = new Block(WIDTH / 2, HEIGHT, WIDTH + 25, 25);
+   var wallTop = new Block(WIDTH / 2, 0, WIDTH + 25, 25);
+   var wallLeft = new Block(0, HEIGHT / 2, 25, HEIGHT + 25);
+   var wallRight = new Block(WIDTH, HEIGHT / 2, 25, HEIGHT + 25);
+   blockArr.push(wallTop);
+   blockArr.push(wallBot);
+   blockArr.push(wallLeft);
+   blockArr.push(wallRight);
+
+   var block1 = new Block(WIDTH / 2, HEIGHT / 2, WIDTH * .4, 25);
+   var block2 = new Block(WIDTH / 2, HEIGHT / 4, 25, WIDTH * .2);
+   var block3 = new Block(WIDTH / 2, 3 * HEIGHT / 4, 25, WIDTH * .2);
    blockArr.push(block1);
    blockArr.push(block2);
    blockArr.push(block3);

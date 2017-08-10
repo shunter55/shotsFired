@@ -28,6 +28,46 @@ class Circle {
 	   return cornerDist_sq <= Math.pow(this.radius, 2);
 	}
 
+	distRectangle(other) {
+		if (this.center.x < other.xMin) { // Region I, VIII, or VII
+            if (this.center.y < other.yMin) { // I
+                var diff = new Vertex(other.xMin, other.yMin);
+                return this.center.dist(diff);
+            }
+            else if (this.center.y > other.yMax) { // VII
+                var diff = new Vertex(other.xMin, other.yMax);
+                return this.center.dist(diff);
+            }
+            else { // VIII
+                return other.xMin - this.center.x;
+            }
+        }
+        else if (this.center.x > other.xMax) { // Region III, IV, or V
+            if (this.center.y < other.yMin) { // III
+                var diff = new Vertex(other.xMax, other.yMin);
+                return this.center.dist(diff);
+            }
+            else if (this.center.y > other.yMax) { // V
+                var diff = new Vertex(other.xMax, other.yMax);
+                return this.center.dist(diff);
+            }
+            else { // IV
+                return this.center.x - other.xMax;
+            }
+        }
+        else { // Region II, IX, or VI
+            if (this.center.y < other.yMin) { // II
+                return other.yMin - this.center.y;
+            }
+            else if (this.center.y > other.yMax) { // VI
+                return this.center.y - other.yMax;
+            }
+            else { // IX
+                return 0;
+            }
+        }
+	}
+
 	inBounds() {
 		return !(this.center.x < 0 + this.radius ||
 					this.center.x > Constants.map.WIDTH - this.radius ||

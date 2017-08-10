@@ -1,8 +1,8 @@
+const SCREEN_SIZE = 600;
+
 var PORT = 8080;
 var IP = 'localhost';
 var ws = new WebSocket('ws://' + IP + ':' + PORT, 'echo-protocol');
-
-var SWIDTH = 600;
 
 var serverPacket;
 var keys = { a: false, d: false, w: false, s: false, shoot: false, shootPos: { 'x': 0, 'y': 0 } };
@@ -65,7 +65,6 @@ server.connect = function() {
 server.setupWS = function() {
   ws.addEventListener("message", function(e) {
     serverPacket = JSON.parse(e.data);
-    console.log(serverPacket);
     draw();
     server.sendMessage();
   });
@@ -89,22 +88,14 @@ server.sendMessage = function() {
 
 
 
-function Map(len) {
+function Map() {
   map.map = document.getElementById("map");
-  console.log(map.map);
   map.map.addEventListener("click", player.shootBullet);
-  map.map.style.width = len;
-  map.map.style.height = len;
-  map.ratio = to_num(map.map.style.width) / SWIDTH
-  //map.map.style.width.substring(0, map.map.style.width.length - 2) / SWIDTH;
-  console.log(map.ratio);
-  map.width = len;
-  map.height = len;
+  redrawMap();
 }
 
 map.getPoints = function(e) {
   if(e.target.id === "map") {
-    console.log(map.ratio);
     return [e.layerX/map.ratio, e.layerY/map.ratio];
   } else if(e.target.parentElement.id === "map") {
     return [(e.layerX+to_num(e.target.style.left))/map.ratio, (e.layerY+to_num(e.target.style.top))/map.ratio];
@@ -114,19 +105,24 @@ map.getPoints = function(e) {
 
 var setup = {};
 setup.init = function() {
-   Map(window.innerHeight - 50);
-   console.log(map);
+   Map();
 };
 
 server.setupWS();
 
+var offset = {
+  x: 0,
+  y: 0
+};
 
 var player = {};
 player.shootBullet = function(e) {
-   console.log(e);
    var points = map.getPoints(e);
-   keys.shoot = true
-   keys.shootPos = {'x': points[0], 'y': points[1]}
+   keys.shoot = true;
+
+   var offsetX = serverPacket.playerArr[0].center.x + (points[0] - SCREEN_SIZE / 2);
+   var offsetY = serverPacket.playerArr[0].center.y + (points[1] - SCREEN_SIZE / 2);
+   keys.shootPos = {'x': offsetX, 'y': offsetY};
 }
 
 var util = {};
@@ -152,8 +148,8 @@ map.createPlayer = function() {
 };
 
 map.drawPlayer = function(player, i) {
-  var y = player.center.y*map.ratio - player.radius*map.ratio;
-  var x = player.center.x*map.ratio - player.radius*map.ratio;
+  var y = (player.center.y + offset.y) * map.ratio - player.radius * map.ratio;
+  var x = (player.center.x + offset.x) * map.ratio - player.radius*map.ratio;
   players[i].style.top = y;
   players[i].style.left = x;
   players[i].style.width = (2 * player.radius) * map.ratio + 'px';
@@ -176,8 +172,8 @@ map.createBullet = function() {
 };
 
 map.drawBullet = function(bullet, i) {
-  bullets[i].style.top = bullet.center.y*map.ratio - bullet.radius*map.ratio;
-  bullets[i].style.left = bullet.center.x*map.ratio - bullet.radius*map.ratio;
+  bullets[i].style.top = (bullet.center.y + offset.y) * map.ratio - bullet.radius*map.ratio;
+  bullets[i].style.left = (bullet.center.x + offset.x) * map.ratio - bullet.radius*map.ratio;
   bullets[i].style.width = (2 * bullet.radius) * map.ratio + 'px'
   bullets[i].style.height = (2 * bullet.radius) * map.ratio + 'px'
   bullets[i].style.borderRadius = bullet.radius * map.ratio + 'px'
@@ -192,8 +188,8 @@ map.createBlock = function() {
 }
 
 map.drawBlock = function(block, i) {
-  blocks[i].style.top = block.center.y*map.ratio - block.height*map.ratio/2;
-  blocks[i].style.left = block.center.x*map.ratio - block.width*map.ratio/2;
+  blocks[i].style.top = (block.center.y + offset.y) * map.ratio - block.height*map.ratio/2;
+  blocks[i].style.left = (block.center.x + offset.x) * map.ratio - block.width*map.ratio/2;
   blocks[i].style.width = (block.width * map.ratio) + "px";
   blocks[i].style.height = (block.height * map.ratio) + "px";
 }
@@ -207,7 +203,7 @@ function redrawAll() {
   }
   for(var i = 0; i < blocks.length; i++) {
     var block = blocks[i];
-    console.log('new ' + map.ratio);
+
     block.style.top = serverPacket.blockArr[i].center.y*map.ratio - serverPacket.blockArr[i].height*map.ratio/2;
     block.style.left = serverPacket.blockArr[i].center.x*map.ratio - serverPacket.blockArr[i].width*map.ratio/2;
     block.style.width = (serverPacket.blockArr[i].width * map.ratio) + "px";
@@ -216,17 +212,24 @@ function redrawAll() {
 }
 
 function redrawMap() {
-  if(to_num(map.map.style.height) !== window.innerHeight-50) {
-    map.map.style.height = window.innerHeight - 50;
-    map.map.style.width = window.innerHeight - 50;
-    console.log('old ' + map.ratio);
-    map.ratio = to_num(map.map.style.height) / SWIDTH;
-    redrawAll();
+  if(to_num(map.map.style.height) !== window.innerHeight) {
+    map.map.style.height = window.innerHeight;
+    map.map.style.width = window.innerHeight;
+    map.ratio = to_num(map.map.style.height) / SCREEN_SIZE;
+
+    var leftBorder = document.getElementById("leftBorder");
+    leftBorder.style.width = (window.innerWidth - to_num(map.map.style.width)) / 2;
+    leftBorder.style.height = window.innerHeight + 10;
+    var rightBorder = document.getElementById("rightBorder");
+    rightBorder.style.width = (window.innerWidth - to_num(map.map.style.width)) / 2;
+    rightBorder.style.height = window.innerHeight + 10;
   }
 }
 
 var draw = function() {
-  var i = players.length;
+  offset.x = SCREEN_SIZE / 2 - serverPacket.playerArr[0].center.x;
+  offset.y = SCREEN_SIZE / 2 - serverPacket.playerArr[0].center.y;
+
   redrawMap();
 
   // Add Players.
