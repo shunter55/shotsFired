@@ -1,5 +1,6 @@
 #body {
   background-color: orangered;
+  overflow: hidden;
 }
 
 #map {
@@ -22,3 +23,35 @@
 #rightBorder {
 	right: 0;
 }
+
+#score {
+	position: absolute;
+	width: 24em;
+	height: 4em;
+	top: 0%;
+	left: 50%;
+	margin-left: -12em;
+	z-index: 100;
+}
+
+#score0, #score1, #time {
+	font-size: 25px;
+	text-align: center;
+}
+
+#score0 {
+	color: green;
+}
+
+#score1 {
+	color: blue;
+}
+
+
+
+
+
+
+
+
+

@@ -70,6 +70,7 @@ server.setupWS = function() {
   ws.addEventListener("message", function(e) {
     serverPacket = JSON.parse(e.data);
     draw();
+    updateScore();
     server.sendMessage();
   });
 }
@@ -226,7 +227,6 @@ map.createFlag = function() {
 }
 
 map.drawFlag = function(flag, i) {
-  console.log(flag);
   flags[i].style.top = (flag.center.y + offset.y) * map.ratio - flag.radius*map.ratio;
   flags[i].style.left = (flag.center.x + offset.x) * map.ratio - flag.radius*map.ratio;
   flags[i].style.width = (2 * (flag.radius - FLAG_BORDER_SIZE)) * map.ratio + 'px';
@@ -257,7 +257,7 @@ function redrawAll() {
 }
 
 function redrawMap() {
-  if(to_num(map.map.style.height) !== window.innerHeight) {
+  if(to_num(map.map.style.height) !== window.innerHeight || to_num(map.map.style.width) !== window.innerWidth) {
     map.map.style.height = window.innerHeight;
     map.map.style.width = window.innerHeight;
     map.ratio = to_num(map.map.style.height) / SCREEN_SIZE;
@@ -334,9 +334,16 @@ var draw = function() {
   }
 };
 
-
-
-
+var updateScore = function() {
+  var score = serverPacket.score;
+  document.getElementById("score0").innerHTML = score.teams[0];
+  document.getElementById("score1").innerHTML = score.teams[1];
+  var seconds = score.time % 60;
+  if (seconds <= 9) {
+    seconds = "0" + seconds;
+  }
+  document.getElementById("time").innerHTML = Math.floor(score.time / 60) + ":" + seconds;
+}
 
 var shootHack = function() {
    for (var i in serverPacket.playerArr) {

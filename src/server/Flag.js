@@ -8,14 +8,20 @@ class Flag extends Circle {
 	constructor(team, positionFunction) {
 		super(0, 0, Constants.flag.RADIUS);
 		this.team = team;
+		this.atSpawn = true;
 		this.positionFunction = positionFunction;
 		this.resetPosition();
+	}
+
+	pickUp() {
+		this.atSpawn = false;
 	}
 
 	resetPosition() {
 		var pos = this.positionFunction(this);
 		this.center.x = pos.x;
 		this.center.y = pos.y;
+		this.atSpawn = true;
 	}
 }
 

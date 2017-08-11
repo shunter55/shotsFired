@@ -17,6 +17,10 @@ var bulletArr = [];
 var blockArr = [];
 // team : flagObj
 var flagArr = {};
+var score = {
+   teams: [],
+   time: 0
+};
 
 server.listen(Constants.server.PORT, function() {
     console.log((new Date()) + ' Server is listening on port ' + Constants.server.PORT);
@@ -138,9 +142,18 @@ var updateClients = function() {
             var flag = flagArr[i];
             // IF player collides with flag.
             if (player.collideCircle(flag)) {
+               // Player touched own flag.
                if (player.team == flag.team) {
+                  // Player has other teams flag.
+                  if (player.flag != false && flag.atSpawn) {
+                     score.teams[flag.team] += 1;
+                     util.dropAndResetFlag(player);
+
+                  }
+
                   flag.resetPosition();
                } else {
+                  flag.pickUp();
                   player.flag = flag;
                   delete flagArr[i];
                }
@@ -181,6 +194,14 @@ setInterval(function() {
    updateClients();
 }, 15);
 
+// Game time
+setInterval(function() {
+   if (score.time <= 0) {
+      start();
+   }
+   score.time -= 1;
+}, 1000)
+
 
 var util = {};
 util.createPacketForId = function(playerId, playerArr, bulletArr, blockArr) {
@@ -217,12 +238,21 @@ util.createPacketForId = function(playerId, playerArr, bulletArr, blockArr) {
       }
    }
 
-   var packet = new ServerPacket(newPlayerArr, newBulletArr, newBlockArr, newFlagArr);
+   var packet = new ServerPacket(newPlayerArr, newBulletArr, newBlockArr, newFlagArr, score);
    return JSON.stringify(packet);
 }
 
 util.getPlayerWithId = function(id) {
    return connections.clients[id].obj;
+}
+
+util.dropAndResetFlag = function(player) {
+   if (player.flag != false) {
+      var flag = player.flag;
+      flag.resetPosition();
+      flagArr[flag.team] = flag;
+      player.flag = false;
+   }
 }
 
 util.killPlayer = function(player) {
@@ -262,6 +292,11 @@ setup.createMap = function() {
    var flag1 = new Flag(1, setup.flagPositionFunction);
    flagArr[0] = flag0;
    flagArr[1] = flag1;
+
+   score.teams.push(0);
+   score.teams.push(0);
+
+   score.time = 300;
 }
 
 setup.playerPositionFunction = function(player) {
@@ -290,7 +325,28 @@ var random = function(start, end) {
    return Math.floor(Math.random() * (end - start + 1)) + start
 }
 
-setup.createMap();
+var start = function() {
+   for (var i in connections.clients) {
+      var player = connections.clients[i].obj;
+      util.killPlayer(player);
+   }
+
+   for (var i in flagArr) {
+      var flag = flagArr[i];
+      flag.resetPosition;
+   }
+
+   bulletArr = [];
+
+   score = {
+      teams: [],
+      time: 0
+   };
+
+   setup.createMap();
+}
+
+start();
 
 
 
