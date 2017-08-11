@@ -268,6 +268,9 @@ function redrawMap() {
     var rightBorder = document.getElementById("rightBorder");
     rightBorder.style.width = (window.innerWidth - to_num(map.map.style.width)) / 2;
     rightBorder.style.height = window.innerHeight + 10;
+
+    map.map.style.minHeight = window.innerHeight
+    map.map.style.minWidth = window.innerHeight
   }
 }
 
