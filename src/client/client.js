@@ -1,4 +1,7 @@
+"use strict"
+
 const SCREEN_SIZE = 600;
+const FLAG_BORDER_SIZE = 5;
 
 var PORT = 8080;
 var IP = 'localhost';
@@ -9,6 +12,7 @@ var keys = { a: false, d: false, w: false, s: false, shoot: false, shootPos: { '
 var players = [];
 var bullets = [];
 var blocks = [];
+var flags = [];
 
 function to_num(s) {
   return Number(s.substring(0, s.length-2));
@@ -141,7 +145,6 @@ util.convertCenterPosRectangle = function(rectangle, ratio) {
 
 map.createPlayer = function() {
   var player = document.createElement('div');
-  player.style.backgroundColor = 'green';
   player.style.position = 'absolute';
   players.push(player);
   map.map.appendChild(player);
@@ -155,6 +158,24 @@ map.drawPlayer = function(player, i) {
   players[i].style.width = (2 * player.radius) * map.ratio + 'px';
   players[i].style.height = (2 * player.radius) * map.ratio + 'px';
   players[i].style.borderRadius = player.radius * map.ratio + 'px';
+  players[i].style.border = "none";
+
+  if (player.team == 1) {
+    players[i].style.backgroundColor = 'blue';
+  } else {
+    players[i].style.backgroundColor = 'green';
+  }
+
+  if (player.flag != false) {
+    players[i].style.width = (2 * (player.radius - FLAG_BORDER_SIZE)) * map.ratio + 'px';
+    players[i].style.height = (2 * (player.radius - FLAG_BORDER_SIZE)) * map.ratio + 'px';
+    players[i].style.borderRadius = player.radius * map.ratio + 'px';
+    if (player.flag.team == 0) {
+      players[i].style.border = FLAG_BORDER_SIZE + "px solid green";
+    } else {
+      players[i].style.border = FLAG_BORDER_SIZE + "px solid blue";
+    }
+  }
 
   if (player.deathTimer > 0) {
     players[i].style.opacity = "0.5";
@@ -174,15 +195,16 @@ map.createBullet = function() {
 map.drawBullet = function(bullet, i) {
   bullets[i].style.top = (bullet.center.y + offset.y) * map.ratio - bullet.radius*map.ratio;
   bullets[i].style.left = (bullet.center.x + offset.x) * map.ratio - bullet.radius*map.ratio;
-  bullets[i].style.width = (2 * bullet.radius) * map.ratio + 'px'
-  bullets[i].style.height = (2 * bullet.radius) * map.ratio + 'px'
-  bullets[i].style.borderRadius = bullet.radius * map.ratio + 'px'
+  bullets[i].style.width = (2 * bullet.radius) * map.ratio + 'px';
+  bullets[i].style.height = (2 * bullet.radius) * map.ratio + 'px';
+  bullets[i].style.borderRadius = bullet.radius * map.ratio + 'px';
 };
 
 map.createBlock = function() {
   var block = document.createElement("div");
   block.style.backgroundColor = "orange";
   block.style.position = "absolute";
+  block.style.zIndex = 1;
   blocks.push(block);
   map.map.appendChild(block);
 }
@@ -192,6 +214,29 @@ map.drawBlock = function(block, i) {
   blocks[i].style.left = (block.center.x + offset.x) * map.ratio - block.width*map.ratio/2;
   blocks[i].style.width = (block.width * map.ratio) + "px";
   blocks[i].style.height = (block.height * map.ratio) + "px";
+}
+
+map.createFlag = function() {
+  var flag = document.createElement("div");
+  flag.style.backgroundColor = "gold";
+  flag.style.position = "absolute";
+  flag.style.zIndex = 2;
+  flags.push(flag);
+  map.map.appendChild(flag);
+}
+
+map.drawFlag = function(flag, i) {
+  console.log(flag);
+  flags[i].style.top = (flag.center.y + offset.y) * map.ratio - flag.radius*map.ratio;
+  flags[i].style.left = (flag.center.x + offset.x) * map.ratio - flag.radius*map.ratio;
+  flags[i].style.width = (2 * (flag.radius - FLAG_BORDER_SIZE)) * map.ratio + 'px';
+  flags[i].style.height = (2 * (flag.radius - FLAG_BORDER_SIZE)) * map.ratio + 'px';
+  flags[i].style.borderRadius = flag.radius * map.ratio + 'px';
+  if (flag.team == 0) {
+    flags[i].style.border = FLAG_BORDER_SIZE + "px solid green";
+  } else {
+    flags[i].style.border = FLAG_BORDER_SIZE + "px solid blue";
+  }
 }
 
 function redrawAll() {
@@ -272,6 +317,20 @@ var draw = function() {
   // Draw Blocks.
   for (var i in serverPacket.blockArr) {
     map.drawBlock(serverPacket.blockArr[i], i);
+  }
+
+  // Add Flags.
+  while (serverPacket.flagArr.length > flags.length) {
+    map.createFlag();
+  }
+  // Remove Flags.
+  while (serverPacket.flagArr.length < flags.length) {
+    map.map.removeChild(flags[flags.length - 1]);
+    flags.pop();
+  }
+  // Draw Flags.
+  for (var i in serverPacket.flagArr) {
+    map.drawFlag(serverPacket.flagArr[i], i);
   }
 };
 

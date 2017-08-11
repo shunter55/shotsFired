@@ -3,6 +3,7 @@ const ServerPacket = require('./ServerPacket');
 const Player = require('./Player');
 const Block = require('./Block');
 const Bullet = require('./Bullet');
+const Flag = require('./Flag');
 const Vertex = require('./Vertex');
 
 var http = require('http');
@@ -10,9 +11,12 @@ var server = http.createServer(function(request, response) {});
 
 var connections = {};
 connections.count = 0;
+// playerId : playerObj
 connections.clients = {};
 var bulletArr = [];
 var blockArr = [];
+// team : flagObj
+var flagArr = {};
 
 server.listen(Constants.server.PORT, function() {
     console.log((new Date()) + ' Server is listening on port ' + Constants.server.PORT);
@@ -48,7 +52,8 @@ wsServer.on('request', function(r){
          // Shoot.
          if (packet.shoot) {
             var bullet = new Bullet(new Vertex(playerObj.center.x, playerObj.center.y), 
-                                    new Vertex(packet.shootPos.x, packet.shootPos.y));
+                                    new Vertex(packet.shootPos.x, packet.shootPos.y),
+                                    playerObj.id);
             bulletArr.push(bullet);
          }
       }
@@ -56,6 +61,7 @@ wsServer.on('request', function(r){
 
    // Close the connection.
    connection.on('close', function(reasonCode, description) {
+      util.killPlayer(connections.clients[this.id].obj);
       delete connections.clients[this.id];
       console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
    });
@@ -71,7 +77,7 @@ wsServer.on('request', function(r){
    connection.id = id;
 
    // Set the connection's object.
-   connection.obj = new Player(id);
+   connection.obj = new Player(id, setup.playerPositionFunction);
 
    // Add the connection to our list of connections.
    connections.clients[id] = connection;
@@ -106,7 +112,7 @@ var updateClients = function() {
       }
       // IF player goes out of bounds.
       else if (!player.inBounds()) {
-         player.die();
+         util.killPlayer(player);
       }
       // IF player collides with objects.
       else {
@@ -114,8 +120,8 @@ var updateClients = function() {
          for (var i in bulletArr) {
             var bullet = bulletArr[i];
             // IF player collides with bullet.
-            if (player.collideCircle(bullet)) {
-               player.die();
+            if (util.getPlayerWithId(bullet.shooterId).team != player.team && player.collideCircle(bullet)) {
+               util.killPlayer(player);
                bulletArr.splice(i--, 1);
             }
          }
@@ -123,9 +129,21 @@ var updateClients = function() {
          for (var i in blockArr) {
             var block = blockArr[i];
             // IF player collides with block.
-            //if (util.collisionCR(player, block)) {
             if (player.collideRectangle(block)) {
-               player.die();
+               util.killPlayer(player);
+            }
+         }
+         // Flag collision.
+         for (var i in flagArr) {
+            var flag = flagArr[i];
+            // IF player collides with flag.
+            if (player.collideCircle(flag)) {
+               if (player.team == flag.team) {
+                  flag.resetPosition();
+               } else {
+                  player.flag = flag;
+                  delete flagArr[i];
+               }
             }
          }
       }
@@ -190,9 +208,31 @@ util.createPacketForId = function(playerId, playerArr, bulletArr, blockArr) {
          newBlockArr.push(obj);
       }
    });
+   // Get flags in range.
+   var newFlagArr = [];
+   for (var i in flagArr) {
+      var obj = flagArr[i];
+      if (player.center.dist(obj.center) < Constants.map.SCREEN_SIZE) {
+         newFlagArr.push(obj);
+      }
+   }
 
-   var packet = new ServerPacket(newPlayerArr, newBulletArr, newBlockArr);
+   var packet = new ServerPacket(newPlayerArr, newBulletArr, newBlockArr, newFlagArr);
    return JSON.stringify(packet);
+}
+
+util.getPlayerWithId = function(id) {
+   return connections.clients[id].obj;
+}
+
+util.killPlayer = function(player) {
+   if (player.flag != false) {
+      var flag = player.flag;
+      flag.center.x = player.center.x;
+      flag.center.y = player.center.y;
+      flagArr[flag.team] = flag;
+   }
+   player.die();
 }
 
 
@@ -217,6 +257,37 @@ setup.createMap = function() {
    blockArr.push(block1);
    blockArr.push(block2);
    blockArr.push(block3);
+
+   var flag0 = new Flag(0, setup.flagPositionFunction);
+   var flag1 = new Flag(1, setup.flagPositionFunction);
+   flagArr[0] = flag0;
+   flagArr[1] = flag1;
+}
+
+setup.playerPositionFunction = function(player) {
+   var changeX = Constants.map.WIDTH * 0.15;
+   var changeY = Constants.map.HEIGHT * 0.15;
+
+   if (player.team == 1) {
+      var xPos = Constants.map.WIDTH * 0.95 - random(0, changeX);
+      var yPos = Constants.map.HEIGHT * 0.95 - random(0, changeY);
+      return new Vertex(xPos, yPos)
+   }
+
+   var xPos = Constants.map.WIDTH * 0.05 + random(0, changeX);
+   var yPos = Constants.map.HEIGHT * 0.05 + random(0, changeY);
+   return new Vertex(xPos, yPos)
+}
+
+setup.flagPositionFunction = function(flag) {
+   if (flag.team == 1) {
+      return new Vertex(Constants.map.WIDTH * 0.9, Constants.map.HEIGHT * 0.9);
+   }
+   return new Vertex(Constants.map.WIDTH * 0.1, Constants.map.HEIGHT * 0.1);
+}
+
+var random = function(start, end) {
+   return Math.floor(Math.random() * (end - start + 1)) + start
 }
 
 setup.createMap();

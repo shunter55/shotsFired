@@ -1,3 +1,5 @@
+"use strict"
+
 const Constants = require("./Constants");
 const Rectangle = require("./Rectangle");
 

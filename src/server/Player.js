@@ -1,3 +1,5 @@
+"use strict"
+
 const Constants = require("./Constants");
 const Circle = require('./Circle');
 const Vertex = require('./Vertex');
@@ -8,16 +10,21 @@ var ACCELERATION = Constants.player.ACCELERATION;
 var DECELERATION = Constants.player.DECELERATION;
 var RADIUS = Constants.player.RADIUS;
 
+// positionFunction takes a player and returns a Vertex.
 class Player extends Circle {
-	constructor(id) {
+	constructor(id, positionFunction) {
 		super(0, 0, RADIUS);
-		this.resetPosition();
 
 		this.type = 'player';
    	this.id = id;
    	this.deathTimer = 0;
 	   this.xVel = 0;
 	   this.yVel = 0;
+      this.team = id % Constants.game.NUM_TEAMS;
+      this.flag = false;
+
+      this.positionFunction = positionFunction;
+      this.resetPosition();
 	}
 
 	moveRight() {
@@ -37,12 +44,13 @@ class Player extends Circle {
    }
 
    die() {
+      this.flag = false;
       this.resetPosition();
       this.setDeathTimer();
    }
 
    resetPosition() {
-   	var position = getPosition(this.id);
+   	var position = this.positionFunction(this);
 	   this.center.x = position.x;
 	   this.center.y = position.y;
 	   this.xVel = 0;
@@ -88,18 +96,37 @@ class Player extends Circle {
    }
 }
 
-var getPosition = function(id) {
+var getTeamPosition = function(player) {
+   var changeX = Constants.map.WIDTH * 0.15;
+   var changeY = Constants.map.HEIGHT * 0.15;
+
+   if (player.team == 1) {
+      var xPos = Constants.map.WIDTH * 0.95 - random(0, changeX);
+      var yPos = Constants.map.HEIGHT * 0.95 - random(0, changeY);
+      return new Vertex(xPos, yPos)
+   }
+
+   var xPos = Constants.map.WIDTH * 0.05 + random(0, changeX);
+   var yPos = Constants.map.HEIGHT * 0.05 + random(0, changeY);
+   return new Vertex(xPos, yPos)
+}
+
+var random = function(start, end) {
+   return Math.floor(Math.random() * (end - start + 1)) + start
+}
+
+var getPosition = function(player) {
    var xPos, yPos;
-   if (id === 0) {
+   if (player.id === 0) {
       xPos = Constants.map.WIDTH * 0.1;
       yPos = Constants.map.HEIGHT * 0.1;
-   } else if (id === 1) {
+   } else if (player.id === 1) {
       xPos = Constants.map.WIDTH * 0.9;
       yPos = Constants.map.HEIGHT * 0.9;
-   } else if (id === 2) {
+   } else if (player.id === 2) {
       xPos = Constants.map.WIDTH * 0.9;
       yPos = Constants.map.HEIGHT * 0.1;
-   } else if (id == 3) {
+   } else if (player.id == 3) {
       xPos = Constants.map.WIDTH * 0.1;
       yPos = Constants.map.HEIGHT * 0.9;
    } else {

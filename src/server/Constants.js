@@ -3,6 +3,9 @@ var Constants = {
 	server: {
 		PORT: 8080
 	},
+	flag: {
+		RADIUS: 13
+	},
 	player: {
 		MAX_VELOCITY: 12,
 		ACCELERATION: .21,
@@ -18,7 +21,10 @@ var Constants = {
 	map: {
 		WIDTH: 800,
 		HEIGHT: 800,
-		SCREEN_SIZE: 425 // (Client Width / 2) * sqrt(2)
+		SCREEN_SIZE: 435 // (Client Width / 2) * sqrt(2)
+	},
+	game: {
+		NUM_TEAMS: 2
 	}
 }
 
