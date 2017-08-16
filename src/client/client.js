@@ -154,8 +154,8 @@ map.createPlayer = function() {
 map.drawPlayer = function(player, i) {
   var y = (player.center.y + offset.y) * map.ratio - player.radius * map.ratio;
   var x = (player.center.x + offset.x) * map.ratio - player.radius*map.ratio;
-  players[i].style.top = y;
-  players[i].style.left = x;
+  players[i].style.transform = "translate(" + x + "px, " + y + "px)";
+
   players[i].style.width = (2 * player.radius) * map.ratio + 'px';
   players[i].style.height = (2 * player.radius) * map.ratio + 'px';
   players[i].style.borderRadius = player.radius * map.ratio + 'px';
@@ -194,8 +194,10 @@ map.createBullet = function() {
 };
 
 map.drawBullet = function(bullet, i) {
-  bullets[i].style.top = (bullet.center.y + offset.y) * map.ratio - bullet.radius*map.ratio;
-  bullets[i].style.left = (bullet.center.x + offset.x) * map.ratio - bullet.radius*map.ratio;
+  var y = (bullet.center.y + offset.y) * map.ratio - bullet.radius*map.ratio;
+  var x = (bullet.center.x + offset.x) * map.ratio - bullet.radius*map.ratio;
+  bullets[i].style.transform = "translate(" + x + "px, " + y + "px)";
+
   bullets[i].style.width = (2 * bullet.radius) * map.ratio + 'px';
   bullets[i].style.height = (2 * bullet.radius) * map.ratio + 'px';
   bullets[i].style.borderRadius = bullet.radius * map.ratio + 'px';
@@ -211,8 +213,10 @@ map.createBlock = function() {
 }
 
 map.drawBlock = function(block, i) {
-  blocks[i].style.top = (block.center.y + offset.y) * map.ratio - block.height*map.ratio/2;
-  blocks[i].style.left = (block.center.x + offset.x) * map.ratio - block.width*map.ratio/2;
+  var y = (block.center.y + offset.y) * map.ratio - block.height*map.ratio/2;
+  var x = (block.center.x + offset.x) * map.ratio - block.width*map.ratio/2;
+  blocks[i].style.transform = "translate(" + x + "px, " + y + "px)";
+  
   blocks[i].style.width = (block.width * map.ratio) + "px";
   blocks[i].style.height = (block.height * map.ratio) + "px";
 }
@@ -227,8 +231,10 @@ map.createFlag = function() {
 }
 
 map.drawFlag = function(flag, i) {
-  flags[i].style.top = (flag.center.y + offset.y) * map.ratio - flag.radius*map.ratio;
-  flags[i].style.left = (flag.center.x + offset.x) * map.ratio - flag.radius*map.ratio;
+  var y = (flag.center.y + offset.y) * map.ratio - flag.radius*map.ratio;
+  var x = (flag.center.x + offset.x) * map.ratio - flag.radius*map.ratio;
+  flags[i].style.transform = "translate(" + x + "px, " + y + "px)";
+
   flags[i].style.width = (2 * (flag.radius - FLAG_BORDER_SIZE)) * map.ratio + 'px';
   flags[i].style.height = (2 * (flag.radius - FLAG_BORDER_SIZE)) * map.ratio + 'px';
   flags[i].style.borderRadius = flag.radius * map.ratio + 'px';
@@ -249,8 +255,10 @@ function redrawAll() {
   for(var i = 0; i < blocks.length; i++) {
     var block = blocks[i];
 
-    block.style.top = serverPacket.blockArr[i].center.y*map.ratio - serverPacket.blockArr[i].height*map.ratio/2;
-    block.style.left = serverPacket.blockArr[i].center.x*map.ratio - serverPacket.blockArr[i].width*map.ratio/2;
+    var y = serverPacket.blockArr[i].center.y*map.ratio - serverPacket.blockArr[i].height*map.ratio/2;
+    var x = serverPacket.blockArr[i].center.x*map.ratio - serverPacket.blockArr[i].width*map.ratio/2;
+    block.style.transform = "translate(" + x + "px, " + y + "px)";
+
     block.style.width = (serverPacket.blockArr[i].width * map.ratio) + "px";
     block.style.height = (serverPacket.blockArr[i].height * map.ratio) + "px";
   }
