@@ -10,7 +10,6 @@ var http = require('http');
 var server = http.createServer(function(request, response) {});
 
 var connections = {};
-connections.count = 0;
 // playerId : playerObj
 connections.clients = {};
 var bulletArr = [];
@@ -272,6 +271,14 @@ setup.createMap = function() {
    var WIDTH = Constants.map.WIDTH;
    var HEIGHT = Constants.map.HEIGHT;
 
+   bulletArr = [];
+   blockArr = [];
+   flagArr = [];
+   score = {
+      teams: [],
+      time: 300
+   };
+
    var wallBot = new Block(WIDTH / 2, HEIGHT, WIDTH + 25, 25);
    var wallTop = new Block(WIDTH / 2, 0, WIDTH + 25, 25);
    var wallLeft = new Block(0, HEIGHT / 2, 25, HEIGHT + 25);
@@ -295,8 +302,6 @@ setup.createMap = function() {
 
    score.teams.push(0);
    score.teams.push(0);
-
-   score.time = 300;
 }
 
 setup.playerPositionFunction = function(player) {
