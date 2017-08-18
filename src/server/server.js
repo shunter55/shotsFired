@@ -1,5 +1,6 @@
 const Constants = require("./Constants");
 const ServerPacket = require('./ServerPacket');
+const PacketType = require('./PacketType');
 const Player = require('./Player');
 const Block = require('./Block');
 const Bullet = require('./Bullet');
@@ -84,14 +85,29 @@ wsServer.on('request', function(r){
 
    // Add the connection to our list of connections.
    connections.clients[id] = connection;
+   connection.send(util.createScorePacket());
 
    console.log((new Date()) + ' Connection accepted [' + id + ']');
 });
 
 
+var updateClients = {};
 
-// Sends data to all clients.
-var updateClients = function() {
+// Sends score data to all clients.
+updateClients.score = function() {
+   if (score.time <= 0) {
+      start();
+   }
+   score.time -= 1;
+
+   // Send ServerPacket to all clients.
+   for (var id in connections.clients) {
+      connections.clients[id].send(util.createScorePacket());
+   };
+}
+
+// Sends game data to all clients.
+updateClients.update = function() {
    // Get all player objects.
    var playerArr = [];
    for (var i in connections.clients) {
@@ -190,15 +206,12 @@ var updateClients = function() {
 // Send data to all clients.
 setInterval(function() {
    // Send Object Coordinates to All Clients.
-   updateClients();
+   updateClients.update();
 }, 15);
 
 // Game time
 setInterval(function() {
-   if (score.time <= 0) {
-      start();
-   }
-   score.time -= 1;
+   updateClients.score();
 }, 1000)
 
 
@@ -237,8 +250,12 @@ util.createPacketForId = function(playerId, playerArr, bulletArr, blockArr) {
       }
    }
 
-   var packet = new ServerPacket(newPlayerArr, newBulletArr, newBlockArr, newFlagArr, score);
+   var packet = new ServerPacket(PacketType.update, newPlayerArr, newBulletArr, newBlockArr, newFlagArr, null);
    return JSON.stringify(packet);
+}
+
+util.createScorePacket = function() {
+   return JSON.stringify(new ServerPacket(PacketType.score, null, null, null, null, score));
 }
 
 util.getPlayerWithId = function(id) {
@@ -262,6 +279,16 @@ util.killPlayer = function(player) {
       flagArr[flag.team] = flag;
    }
    player.die();
+}
+
+util.resetPlayer = function(player) {
+   if (player.flag != false) {
+      var flag = player.flag;
+      flag.center.x = player.center.x;
+      flag.center.y = player.center.y;
+      flagArr[flag.team] = flag;
+   }
+   player.reset();
 }
 
 
@@ -333,7 +360,7 @@ var random = function(start, end) {
 var start = function() {
    for (var i in connections.clients) {
       var player = connections.clients[i].obj;
-      util.killPlayer(player);
+      util.resetPlayer(player);
    }
 
    for (var i in flagArr) {

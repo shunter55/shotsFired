@@ -2,7 +2,8 @@
 
 // ServerPacket
 class ServerPacket {
-	constructor(playerArr, bulletArr, blockArr, flagArr, score) {
+	constructor(type, playerArr, bulletArr, blockArr, flagArr, score) {
+		this.type = type;
 		this.playerArr = playerArr;
 	   this.bulletArr = bulletArr;
 	   this.blockArr = blockArr;

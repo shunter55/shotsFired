@@ -49,6 +49,11 @@ class Player extends Circle {
       this.setDeathTimer();
    }
 
+   reset() {
+      this.die();
+      this.deathTimer = 0;
+   }
+
    resetPosition() {
    	var position = this.positionFunction(this);
 	   this.center.x = position.x;

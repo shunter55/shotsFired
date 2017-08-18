@@ -40,15 +40,19 @@ window.addEventListener("keydown", function(event) {
 window.addEventListener("keyup", function(event) {
   switch (event.key) {
     case 'a':
+    case 'A':
       keys.a = false;
       break;
     case 's':
+    case 'S':
       keys.s = false;
       break;
     case 'd':
+    case 'D':
       keys.d = false;
       break;
     case 'w':
+    case 'W':
       keys.w = false;
       break;
   }
@@ -69,9 +73,20 @@ server.connect = function() {
 server.setupWS = function() {
   ws.addEventListener("message", function(e) {
     serverPacket = JSON.parse(e.data);
-    draw();
-    updateScore();
-    server.sendMessage();
+    switch (serverPacket.type) {
+      case "update":
+        draw();
+        server.sendMessage();
+        break;
+      case "message":
+        break;
+      case "score":
+        updateScore();
+        break;
+      default:
+        console.log("Unsupported Packet Type");
+        break;
+    }
   });
 }
 
@@ -216,7 +231,7 @@ map.drawBlock = function(block, i) {
   var y = (block.center.y + offset.y) * map.ratio - block.height*map.ratio/2;
   var x = (block.center.x + offset.x) * map.ratio - block.width*map.ratio/2;
   blocks[i].style.transform = "translate(" + x + "px, " + y + "px)";
-  
+
   blocks[i].style.width = (block.width * map.ratio) + "px";
   blocks[i].style.height = (block.height * map.ratio) + "px";
 }
