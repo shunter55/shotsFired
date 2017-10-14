@@ -10,5 +10,5 @@ Run Client:
 Resources:
 http://codular.com/node-web-sockets
 
-Demo: (just paste in your search bar)
+Demo (just paste in your search bar):
 35.193.249.235
